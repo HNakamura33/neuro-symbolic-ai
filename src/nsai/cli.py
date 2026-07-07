@@ -217,6 +217,39 @@ def kb_source(
     console.print(table)
 
 
+@kb_app.command("build-from-code")
+def kb_build_from_code(
+    path: Path = typer.Argument(
+        ..., exists=True, readable=True, help="Python file or directory to analyze"
+    ),
+    kb: Optional[Path] = KBPathOption,
+):
+    """Extract structural facts from Python source into the KB (no LLM).
+
+    Records imports, definitions, statically visible calls, class hierarchy,
+    and raised exceptions via the ast module, with per-file provenance.
+    Re-running after code changes only adds new triples; stale contracts then
+    surface as contradictions through `kb check`.
+    """
+    from .code2kb import extract_from_path
+
+    store = KnowledgeBase(_kb_path(kb))
+    files = 0
+    skipped = 0
+    total = 0
+    for file, triples in extract_from_path(path):
+        files += 1
+        if not triples:
+            skipped += 1
+            console.print(f"[yellow]skipped (parse error): {file}[/yellow]")
+            continue
+        total += store.add_triples(triples, source=f"{file} (static-analysis)")
+    console.print(
+        f"scanned {files} files ({skipped} skipped), "
+        f"added {total} new triples ({store.stats()['triples']} total)."
+    )
+
+
 @kb_app.command("stats")
 def kb_stats_cmd(kb: Optional[Path] = KBPathOption):
     """KB size summary."""
