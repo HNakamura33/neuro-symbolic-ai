@@ -104,6 +104,9 @@ class KnowledgeBase:
         self.path = path
         # Sidecar provenance log: one JSON line per asserted triple with a source.
         self.prov_path = path.with_suffix(".prov.jsonl")
+        # OWL-RL closure is recomputed only after the graph changes (~1s at
+        # 5k triples, so repeated verify_triple calls need the cache).
+        self._closure_cache: Graph | None = None
         self.graph = Graph()
         for prefix, ns in _PREFIXES.items():
             self.graph.bind(prefix, ns)
@@ -137,6 +140,7 @@ class KnowledgeBase:
                 self.graph.add(triple)
                 added.append(triple)
         if added:
+            self._closure_cache = None
             self.save()
             if source:
                 self._log_provenance(added, source)
@@ -184,6 +188,7 @@ class KnowledgeBase:
                 self.graph.remove(triple)
                 removed += 1
         if removed:
+            self._closure_cache = None
             self.save()
         return removed
 
@@ -222,13 +227,19 @@ class KnowledgeBase:
     # -- reasoning -----------------------------------------------------------
 
     def closure(self) -> Graph:
-        """Return a copy of the graph expanded with OWL-RL + RDFS inference."""
+        """Return the graph expanded with OWL-RL + RDFS inference.
+
+        Cached until the next mutation; treat the returned graph as read-only.
+        """
+        if self._closure_cache is not None:
+            return self._closure_cache
         expanded = Graph()
         for prefix, ns in _PREFIXES.items():
             expanded.bind(prefix, ns)
         for triple in self.graph:
             expanded.add(triple)
         owlrl.DeductiveClosure(owlrl.OWLRL_Semantics).expand(expanded)
+        self._closure_cache = expanded
         return expanded
 
     def infer(self) -> int:
@@ -288,6 +299,7 @@ class KnowledgeBase:
         self.graph.parse(src, format=fmt)  # fmt=None → guess from extension
         added = len(self.graph) - before
         if added:
+            self._closure_cache = None
             self.save()
         return added
 

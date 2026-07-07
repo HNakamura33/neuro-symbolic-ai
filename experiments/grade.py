@@ -113,6 +113,13 @@ def summarize(records: list[dict]) -> dict:
         for r in records:
             by_hops.setdefault(r.get("hops"), []).append(r)
         out["accuracy_by_hops"] = {k: accuracy(v) for k, v in sorted(by_hops.items())}
+    if records and records[0]["task_type"] == "audit":
+        prec = _mean([r["precision"] for r in records if r.get("precision") is not None])
+        rec = _mean([r["recall"] for r in records if r.get("recall") is not None])
+        out["mean_precision"] = prec
+        out["mean_recall"] = rec
+        if prec and rec:
+            out["f1"] = 2 * prec * rec / (prec + rec)
     tool_totals: Counter = Counter()
     for r in records:
         tool_totals.update(r.get("tool_calls") or {})

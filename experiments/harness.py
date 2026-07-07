@@ -47,6 +47,7 @@ BASELINE_SYSTEM = (
 )
 
 _FINAL_RE = re.compile(r"FINAL:\s*([^\s`*]+)")
+_FINAL_LINE_RE = re.compile(r"FINAL:\s*(.+)")
 
 CLAIM_TASK = """\
 Decide whether the following claim is entailed by, contradicted by, or unknown to \
@@ -70,6 +71,17 @@ Question: {question}
 Reply with the entity CURIE only, ending with the line: FINAL: ns:<name>
 """
 
+AUDIT_TASK = """\
+The knowledge base contains contradictions: functional properties asserted with \
+conflicting values for the same subject{source_hint}.
+Systematically find ALL of them — do not stop after the first few. Include \
+conflicts that only surface through inference.
+
+End your reply with exactly one line listing every conflicting (subject, predicate) \
+pair, semicolon-separated:
+FINAL: ns:subject|ns:predicate; ns:subject|ns:predicate
+"""
+
 
 def render_prompt(task: dict, task_type: str, condition: str, facts_ttl: str | None) -> str:
     if condition == "B0":
@@ -80,8 +92,10 @@ def render_prompt(task: dict, task_type: str, condition: str, facts_ttl: str | N
         source_hint = " via your symbolic tools (kb_verify, kb_sparql, kb_find)"
     if task_type == "claims":
         body = CLAIM_TASK.format(source_hint=source_hint, **task)
-    else:
+    elif task_type == "qa":
         body = QA_TASK.format(source_hint=source_hint, question=task["question"])
+    else:
+        body = AUDIT_TASK.format(source_hint=source_hint)
     if condition == "B1" and facts_ttl:
         body += f"\n--- KNOWLEDGE BASE (Turtle) ---\n{facts_ttl}\n"
     return body
@@ -90,6 +104,15 @@ def render_prompt(task: dict, task_type: str, condition: str, facts_ttl: str | N
 def parse_final(text: str) -> str | None:
     matches = _FINAL_RE.findall(text)
     return matches[-1].strip().rstrip(".,;:") if matches else None
+
+
+def parse_final_pairs(text: str) -> list[str] | None:
+    """Parse the audit FINAL line into a sorted, deduplicated list of s|p pairs."""
+    matches = _FINAL_LINE_RE.findall(text)
+    if not matches:
+        return None
+    pairs = (p.strip().strip("`*.").replace(" ", "") for p in matches[-1].split(";"))
+    return sorted({p for p in pairs if p})
 
 
 def build_condition_options(
@@ -112,11 +135,19 @@ def build_condition_options(
 
 
 def load_tasks(dataset: Path, task_type: str) -> list[dict]:
+    if task_type == "audit":
+        # One whole-KB sweep per run; gold is the injected conflict set.
+        lines = (dataset / "injected.jsonl").read_text(encoding="utf-8").splitlines()
+        injected = [json.loads(line) for line in lines if line]
+        pairs = sorted({f"{r['subject']}|{r['predicate']}" for r in injected})
+        return [{"id": "audit-0", "gold_pairs": pairs}]
     path = dataset / ("claims.jsonl" if task_type == "claims" else "qa.jsonl")
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
 
 
-def gold_of(task: dict, task_type: str) -> str:
+def gold_of(task: dict, task_type: str) -> str | list[str]:
+    if task_type == "audit":
+        return task["gold_pairs"]
     return task["label"] if task_type == "claims" else task["answer"]
 
 
@@ -141,7 +172,8 @@ async def run_task(
                         text_parts.append(block.text)
             elif isinstance(message, ResultMessage):
                 cost = message.total_cost_usd
-    pred = parse_final("\n".join(text_parts))
+    text = "\n".join(text_parts)
+    pred = parse_final_pairs(text) if task_type == "audit" else parse_final(text)
     gold = gold_of(task, task_type)
     record = {
         "task_id": task["id"],
@@ -157,8 +189,14 @@ async def run_task(
     }
     if task_type == "claims":
         record["kind"] = task.get("kind")
-    else:
+    elif task_type == "qa":
         record["hops"] = task.get("hops")
+    else:
+        pred_set, gold_set = set(pred or []), set(gold)
+        tp = len(pred_set & gold_set)
+        record["correct"] = pred_set == gold_set
+        record["precision"] = tp / len(pred_set) if pred_set else 0.0
+        record["recall"] = tp / len(gold_set) if gold_set else 0.0
     return record
 
 
@@ -169,13 +207,26 @@ async def run_dataset(
     tasks = load_tasks(dataset, task_type)
     if limit:
         tasks = tasks[:limit]
-    facts_ttl = (dataset / "kb.ttl").read_text(encoding="utf-8") if condition == "B1" else None
+    # The audit task runs against the contradiction-injected KB copy;
+    # claims/qa gold labels are only valid against the clean kb.ttl.
+    kb_name = "kb-audit.ttl" if task_type == "audit" else "kb.ttl"
+    facts_ttl = None
+    if condition == "B1":
+        facts_ttl = (dataset / kb_name).read_text(encoding="utf-8")
+        if task_type == "audit":
+            prov = dataset / "kb-audit.prov.jsonl"
+            if prov.exists():
+                facts_ttl += "\n--- PROVENANCE LOG (JSONL) ---\n"
+                facts_ttl += prov.read_text(encoding="utf-8")
     out.parent.mkdir(parents=True, exist_ok=True)
     for run in range(runs):
         # Scratch copy so agent-side kb_add_triples can't pollute the dataset.
         with tempfile.TemporaryDirectory() as tmp:
-            kb_copy = Path(tmp) / "kb.ttl"
-            shutil.copy(dataset / "kb.ttl", kb_copy)
+            kb_copy = Path(tmp) / kb_name
+            shutil.copy(dataset / kb_name, kb_copy)
+            prov_src = dataset / f"{kb_name.removesuffix('.ttl')}.prov.jsonl"
+            if prov_src.exists():  # provenance tool reads the sidecar
+                shutil.copy(prov_src, Path(tmp) / prov_src.name)
             for i, task in enumerate(tasks):
                 record = await run_task(task, task_type, condition, model, kb_copy, facts_ttl)
                 record["run"] = run
@@ -192,13 +243,15 @@ async def run_dataset(
 def main() -> None:
     ap = argparse.ArgumentParser(description="Run experiment tasks under one condition")
     ap.add_argument("--dataset", type=Path, required=True, help="Directory from kbgen --out")
-    ap.add_argument("--task-type", choices=("claims", "qa"), required=True)
+    ap.add_argument("--task-type", choices=("claims", "qa", "audit"), required=True)
     ap.add_argument("--condition", choices=CONDITIONS, required=True)
     ap.add_argument("--model", default=None, help="Model alias (e.g. haiku) or full id")
     ap.add_argument("--runs", type=int, default=1)
     ap.add_argument("--limit", type=int, default=None, help="Only the first N tasks (pilot)")
     ap.add_argument("--out", type=Path, required=True, help="Results JSONL (appended)")
     args = ap.parse_args()
+    if args.task_type == "audit" and args.condition == "B0":
+        ap.error("audit requires a KB; B0 has none (use B1/C1/C2)")
     asyncio.run(
         run_dataset(args.dataset, args.task_type, args.condition, args.model,
                     args.runs, args.limit, args.out)

@@ -95,3 +95,30 @@ def test_condition_options(tmp_path: Path):
     c2 = build_condition_options(kb_path, "C2", None)
     assert "Task" in c2.allowed_tools
     assert c2.agents
+
+
+def test_parse_final_pairs():
+    from experiments.harness import parse_final_pairs
+
+    text = ("I found conflicts.\n"
+            "FINAL: ns:p1|ns:born_in; ns:c2|ns:hq_in ; ns:p1|ns:born_in")
+    assert parse_final_pairs(text) == ["ns:c2|ns:hq_in", "ns:p1|ns:born_in"]
+    assert parse_final_pairs("no final line") is None
+
+
+def test_audit_task_loading_and_prompt(tmp_path: Path):
+    import json
+
+    from experiments.harness import load_tasks
+
+    (tmp_path / "injected.jsonl").write_text(
+        json.dumps({"subject": "ns:a", "predicate": "ns:born_in", "object": "ns:x"}) + "\n"
+        + json.dumps({"subject": "ns:b", "predicate": "ns:hq_in", "object": "ns:y"}) + "\n",
+        encoding="utf-8",
+    )
+    tasks = load_tasks(tmp_path, "audit")
+    assert tasks == [{"id": "audit-0", "gold_pairs": ["ns:a|ns:born_in", "ns:b|ns:hq_in"]}]
+    prompt = render_prompt(tasks[0], "audit", "C1", None)
+    assert "FINAL:" in prompt and "symbolic tools" in prompt
+    b1 = render_prompt(tasks[0], "audit", "B1", "ttl-content-here")
+    assert "ttl-content-here" in b1
