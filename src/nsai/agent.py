@@ -52,11 +52,46 @@ async def _confirm_tool(
 
 
 def build_options(
-    kb: KnowledgeBase, model: str | None = None, coding: bool = False
+    kb: KnowledgeBase,
+    model: str | None = None,
+    coding: bool = False,
+    full_auto: bool = False,
+    bypass: bool = False,
+    subagents: bool = True,
 ) -> ClaudeAgentOptions:
     server = build_server(kb)
-    agents = build_agents(coding=coding)
+    # subagents=False is the experiment ablation (condition C1 in
+    # docs/experiment-plan.md): same symbolic tools, no Task delegation.
+    agents = build_agents(coding=coding) if subagents else None
+    task_tool = ["Task"] if subagents else []
+    if (full_auto or bypass) and not coding:
+        raise ValueError("full_auto/bypass are only meaningful in coding mode")
     if coding:
+        if bypass:
+            # Bypass mode: NO allowlist, no gates — every tool the runtime
+            # offers (including network) runs unconfirmed. Only for
+            # disposable sandboxes; supersedes full_auto when both are set.
+            return ClaudeAgentOptions(
+                system_prompt=CODE_SYSTEM_PROMPT,
+                model=model,
+                mcp_servers={"symbolic": server},
+                agents=agents,
+                permission_mode="bypassPermissions",
+                setting_sources=[],
+            )
+        if full_auto:
+            # Full-auto mode: Bash runs without per-command confirmation.
+            # Still an explicit allowlist — anything outside file tools,
+            # Bash, Task, and the symbolic server (network etc.) is denied.
+            return ClaudeAgentOptions(
+                system_prompt=CODE_SYSTEM_PROMPT,
+                model=model,
+                mcp_servers={"symbolic": server},
+                allowed_tools=ALLOWED_TOOL_NAMES + CODING_TOOLS + task_tool + ["Bash"],
+                agents=agents,
+                permission_mode="dontAsk",
+                setting_sources=[],
+            )
         # Hybrid mode: file tools + symbolic solvers. Bash is gated behind a
         # per-command user confirmation (also when a subagent runs it);
         # anything else is denied.
@@ -64,7 +99,7 @@ def build_options(
             system_prompt=CODE_SYSTEM_PROMPT,
             model=model,
             mcp_servers={"symbolic": server},
-            allowed_tools=ALLOWED_TOOL_NAMES + CODING_TOOLS + ["Task"],
+            allowed_tools=ALLOWED_TOOL_NAMES + CODING_TOOLS + task_tool,
             agents=agents,
             can_use_tool=_confirm_tool,
             setting_sources=[],
@@ -75,7 +110,7 @@ def build_options(
         mcp_servers={"symbolic": server},
         # Task enables delegation to the subagents below; each subagent is
         # itself restricted to read-only symbolic tools by its definition.
-        allowed_tools=ALLOWED_TOOL_NAMES + ["Task"],
+        allowed_tools=ALLOWED_TOOL_NAMES + task_tool,
         agents=agents,
         # Deny everything not in allowed_tools: the agent gets ONLY the
         # symbolic tools — no file system, no bash, no network.
@@ -101,25 +136,42 @@ async def _render_response(client: ClaudeSDKClient, show_cost: bool = False) -> 
 
 
 async def run_once(
-    kb_path: Path, prompt: str, model: str | None = None, coding: bool = False
+    kb_path: Path,
+    prompt: str,
+    model: str | None = None,
+    coding: bool = False,
+    full_auto: bool = False,
+    bypass: bool = False,
 ) -> None:
     """One-shot: send a single prompt and print the response."""
     kb = KnowledgeBase(kb_path)
-    options = build_options(kb, model, coding=coding)
+    options = build_options(kb, model, coding=coding, full_auto=full_auto, bypass=bypass)
     async with ClaudeSDKClient(options=options) as client:
         await client.query(prompt)
         await _render_response(client, show_cost=True)
 
 
 async def run_chat(
-    kb_path: Path, model: str | None = None, coding: bool = False
+    kb_path: Path,
+    model: str | None = None,
+    coding: bool = False,
+    full_auto: bool = False,
+    bypass: bool = False,
 ) -> None:
     """Interactive multi-turn REPL sharing one session."""
     kb = KnowledgeBase(kb_path)
-    options = build_options(kb, model, coding=coding)
+    options = build_options(kb, model, coding=coding, full_auto=full_auto, bypass=bypass)
 
     stats = kb.stats()
-    mode = "coding (hybrid)" if coding else "neuro-symbolic agent"
+    if coding:
+        if bypass:
+            mode = "coding (bypass-permissions)"
+        elif full_auto:
+            mode = "coding (full-auto)"
+        else:
+            mode = "coding (hybrid)"
+    else:
+        mode = "neuro-symbolic agent"
     console.print(
         f"[bold]nsai[/bold] — {mode}  "
         f"[dim](KB: {kb_path}, {stats['triples']} triples — /exit to quit)[/dim]"

@@ -29,6 +29,48 @@ def test_coding_mode_adds_file_tools_but_gates_bash(kb: KnowledgeBase):
     assert opts.permission_mode is None
 
 
+def test_full_auto_allows_bash_without_confirmation(kb: KnowledgeBase):
+    opts = build_options(kb, coding=True, full_auto=True)
+    assert "Bash" in opts.allowed_tools
+    for name in ALLOWED_TOOL_NAMES + CODING_TOOLS + ["Task"]:
+        assert name in opts.allowed_tools
+    # No confirmation callback; everything outside the allowlist is denied.
+    assert opts.can_use_tool is None
+    assert opts.permission_mode == "dontAsk"
+
+
+def test_full_auto_requires_coding_mode(kb: KnowledgeBase):
+    with pytest.raises(ValueError):
+        build_options(kb, full_auto=True)
+
+
+def test_subagents_off_is_the_c1_ablation(kb: KnowledgeBase):
+    opts = build_options(kb, subagents=False)
+    assert opts.allowed_tools == ALLOWED_TOOL_NAMES
+    assert not opts.agents
+    coding = build_options(kb, coding=True, subagents=False)
+    assert "Task" not in coding.allowed_tools
+    assert not coding.agents
+
+
+def test_bypass_drops_allowlist_entirely(kb: KnowledgeBase):
+    opts = build_options(kb, coding=True, bypass=True)
+    assert opts.permission_mode == "bypassPermissions"
+    # No allowlist: every runtime tool (network included) is available.
+    assert not opts.allowed_tools
+    assert opts.can_use_tool is None
+    # Symbolic layer and subagents are still wired in.
+    assert "symbolic" in opts.mcp_servers
+    assert opts.agents
+
+
+def test_bypass_supersedes_full_auto_and_requires_coding(kb: KnowledgeBase):
+    opts = build_options(kb, coding=True, full_auto=True, bypass=True)
+    assert opts.permission_mode == "bypassPermissions"
+    with pytest.raises(ValueError):
+        build_options(kb, bypass=True)
+
+
 @pytest.mark.asyncio
 async def test_confirm_tool_denies_non_bash():
     result = await _confirm_tool("WebFetch", {"url": "https://x"}, None)
