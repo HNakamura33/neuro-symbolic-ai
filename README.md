@@ -164,7 +164,8 @@ uv run pytest        # テスト(26件)
 
 ## ロードマップ
 
-- [サブエージェントへの決定論的推論の委譲](docs/future-extensions.md) — symbolic-explorer(知識グラフの agentic search)/ kb-auditor(矛盾の系統的走査)
+- [サブエージェントへの決定論的推論の委譲](docs/future-extensions.md) — symbolic-explorer(知識グラフの agentic search)/ kb-auditor(矛盾の系統的走査)/ test-generator(反例・境界値からのテスト生成)/ loop-judge(ループ終了条件の形式化と判定)
+- [静的解析による KB 構築(code2kb)](docs/future-extensions.md#拡張2-静的解析による-kb-構築code2kb) — `ast` による決定論的な構造抽出(import/呼び出し/継承)+ LLM による意味層(契約・意図)の分業
 
 ## 矛盾検出のモデリングのコツ
 
