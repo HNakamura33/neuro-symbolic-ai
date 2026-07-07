@@ -1,6 +1,6 @@
 # 記号層に接地された LLM エージェント: 知識グラフ・制約ソルバー・SMT による検証可能なニューロシンボリック分業
 
-**ドラフト v0.1** — 実験結果は未記入(TBD)。実験設計は [experiment-plan.md](experiment-plan.md) に従う。
+**ドラフト v0.2** — 実験結果は未記入(TBD)。実験設計は [experiment-plan.md](experiment-plan.md) に従う。引用文献は全件一次情報源で書誌検証済み(2026-07-07)。
 投稿先候補: NeSy / AAAI・IJCAI(ニューロシンボリック枠)/ ACL・EMNLP Findings(tool-augmented LLM 枠)。
 
 ---
@@ -19,7 +19,7 @@ LLM ベースのエージェントは、質問応答・知識管理・コーデ�
 
 1. **偽検証(false verification)** — 誤った、あるいは根拠のない主張を「確認済みの事実」として断定する。検証を求められた場合でも、LLM は自身のパラメトリック知識と文脈からの尤度で「もっともらしさ」を判定するに過ぎず、判定自体がハルシネーションでありうる。
 2. **多段推論の劣化** — 中間エンティティを要するマルチホップ推論は、ホップ数と候補事実数の増大に対して急速に劣化する。文脈に全事実を与える long-context 構成でも、注意機構による「文脈からの検索」は決定論的なグラフ照合の代替にならない。
-3. **自己検証の循環性** — 「自分の出力を自分で確認する」self-verification 系の手法は、検証器が被検証器と同じ機構・同じバイアスを共有するため、系統誤差を検出できない。
+3. **自己検証の循環性** — 「自分の出力を自分で確認する」self-verification 系の手法 (Wang et al., 2023; Manakul et al., 2023; Dhuliawala et al., 2024) は、検証器が被検証器と同じ機構・同じバイアスを共有するため、系統誤差を検出できない。
 
 これらに共通する根本原因は、**生成と検証が同じ機構に同居している**ことである。本論文はこの観察に基づき、徹底した分業アーキテクチャを提案する:
 
@@ -111,7 +111,7 @@ C1/C2 の実装差分はエージェント構成の `subagents` フラグのみ�
 
 **合成 KB(制御実験)** — 生成器 `kbgen` は家系・組織・地理ドメインのスキーマから、規模・ホップ数・矛盾数を独立制御した KB と、QA ペア・検証主張・注入矛盾を同時生成する(シード固定)。**全 gold ラベルは生成時に OWL-RL 閉包で検証される**ため、データセットと `kb_verify` が食い違うことは構造的にない。難易度制御・スケーリング曲線・損益分岐の分析はこちらで行い、汚染はゼロである。
 
-**公開ベンチマーク(外的妥当性)** — KB・トリプル・ルールが明示的に付属するものを優先する(テキストのみのベンチマークは検索・抽出性能が交絡するため)。実験1: ProofWriter / ProntoQA(ルールベース演繹 — 3値判定と同型)、FEVER dev 300 件(根拠文を ingest してからの抽出込み評価)。実験2: MetaQA(約13万トリプル KB 付き 1/2/3-hop QA)、CLUTRR(構成的汎化)、2WikiMultiHopQA 300 問(根拠トリプル付きフルパイプライン評価)。実験4: QuixBugs、HumanEval+ / MBPP+(EvalPlus)、LiveCodeBench(カットオフ後問題)、SWE-bench Verified 境界バグサブセット。ProofWriter のルールは rdfs:subClassOf / SPARQL に写像し、写像不能項目は除外して除外率を報告する。
+**公開ベンチマーク(外的妥当性)** — KB・トリプル・ルールが明示的に付属するものを優先する(テキストのみのベンチマークは検索・抽出性能が交絡するため)。実験1: ProofWriter (Tafjord et al., 2021) / PrOntoQA (Saparov and He, 2023)(ルールベース演繹 — 3値判定と同型)、FEVER (Thorne et al., 2018) dev 300 件(根拠文を ingest してからの抽出込み評価)。実験2: MetaQA (Zhang et al., 2018)(約13万トリプル KB 付き 1/2/3-hop QA)、CLUTRR (Sinha et al., 2019)(構成的汎化)、2WikiMultiHopQA (Ho et al., 2020) 300 問(根拠トリプル付きフルパイプライン評価)。実験4: QuixBugs (Lin et al., 2017)、HumanEval+ / MBPP+(EvalPlus; Liu et al., 2023 — 原典は HumanEval (Chen et al., 2021) と MBPP (Austin et al., 2021))、LiveCodeBench (Jain et al., 2025)(カットオフ後問題)、SWE-bench (Jimenez et al., 2024) Verified (Chowdhury et al., 2024) 境界バグサブセット。ProofWriter のルールは rdfs:subClassOf / SPARQL に写像し、写像不能項目は除外して除外率を報告する。
 
 **汚染対策** — 3対策を全公開ベンチマークに適用する: (1)B0 を汚染プローブとして常時報告し、B0 正解項目を除いた uncontaminated サブセットを主表とする(全項目版は付録)。(2)B1/C1/C2 は同一の事実集合を見るため汚染は全条件に同方向に働き、条件間差分は依然有効 — 主張の根拠は絶対値でなく差分に置く。(3)MetaQA / CLUTRR にはエンティティ名を無作為固有名に置換した摂動版(KB ごと置換するため正解は保存)を用意し、原版とのギャップを LLM 記憶依存度の測定として報告する。記号層は置換に不変のため C1/C2 のギャップ ≈ 0 が予測となる。
 
@@ -221,17 +221,19 @@ C1/C2 の全誤答を次の3層に分類する。分類は2名(または LLM 判
 
 ## 6. Related Work
 
-**Tool-augmented LLM とプログラム補助推論.** 外部ツールで LLM を補強する枠組み(Toolformer, ReAct)や、推論をコードに外部化する PAL / Program-of-Thoughts は、計算の実行を決定論化する点で本研究と方向を共有する。本研究はこれを一歩進め、計算のみならず**事実の保存と主張の判定そのもの**を記号層に移し、「記号層が確認するまで断定しない」という行動規範までを設計に含める。
+**ニューロシンボリック AI.** 記号推論と学習の統合は長い系譜を持ち、Kautz (2022) の taxonomy や Garcez and Lamb (2023)、Sarker et al. (2021) のサーベイに整理されている。Kautz の分類では本システムは Neuro[Symbolic] — ニューラルなエージェントが記号推論エンジンを内部サービスとして呼ぶ構成 — に位置づく。本研究の貢献はこの構成を LLM エージェントにおいて徹底し(事実の保存・推論・検証・求解のすべてを記号層に委譲)、その利得を測定可能な形で示すことにある。
 
-**LLM + 形式論理ソルバー.** Logic-LM、LINC、SatLM は自然言語の推論問題を形式論理に翻訳しソルバーで解く。本研究はこの「LLM=翻訳器、ソルバー=推論器」の分業を単発の QA から**永続的な KB を持つエージェント**に拡張し、出典管理・矛盾検出・マルチセッションの知識蓄積・コーディング検証までを単一アーキテクチャで扱う。また誤りが翻訳(定式化)層に局在するという同系研究の観察を、エージェント設定で層別誤り分析として定量化する(§5)。
+**Tool-augmented LLM とプログラム補助推論.** 外部ツールで LLM を補強する枠組みとして Toolformer (Schick et al., 2023) や ReAct (Yao et al., 2023) がある。ReAct は外部 API との相互作用が chain-of-thought のハルシネーションを軽減すると報告するが、その外部層は検索であり推論・検証は LLM 側に残る。推論を実行系に外部化する PAL (Gao et al., 2023) と Program of Thoughts (Chen et al., 2023) は「分解・定式化だけを LLM の仕事として残し、求解はインタプリタに委譲する」分業を明示的に定式化した原典であり、本研究はこの分業原理を汎用インタプリタから形式的記号層(OWL-RL / CSP / SMT)へ一般化し、計算のみならず**事実の保存と主張の判定そのもの**を記号層に移す。
 
-**知識グラフと RAG.** KBQA の系譜および GraphRAG は、構造化知識による LLM の接地を目指す。多くの構成では検索されたトリプルを文脈に注入し最終判断を LLM に委ねるのに対し、本研究では判定自体(entailed/contradicted/unknown)を OWL-RL 閉包上の決定論的照合が行い、LLM は判定結果を報告する側に回る。B1(long-context)/ B1′(オラクル検索)ベースラインとの比較はこの設計差の効果を直接測る。
+**LLM + 形式論理ソルバー.** Logic-LM (Pan et al., 2023)、LINC (Olausson et al., 2023)、SatLM (Ye et al., 2023) は、LLM を自然言語から形式表現への翻訳器としてのみ用い、推論は決定論的ソルバー(それぞれ記号ソルバー群、一階述語論理証明器、Z3)が行う。Proof of Thought (Ganguly et al., 2024) も同型の分業を DSL 経由の Z3 検証として実現する。本研究はこの「LLM=翻訳器、ソルバー=推論器」の分業を単発の QA から**永続的な KB を持つエージェント**に拡張し、出典管理・矛盾検出・マルチセッションの知識蓄積・コーディング検証までを単一アーキテクチャで扱う。また誤りが翻訳(定式化)層に局在するという同系研究の観察を、エージェント設定で層別誤り分析として定量化する(§5)。
 
-**自己検証とハルシネーション検出.** Self-consistency、SelfCheckGPT 等の self-verification 系は検証器も確率的であるという循環性を持つ。本研究の kb_verify / smt_verify は被検証器と機構を共有しない外部の決定論的検証器であり、偽検証率(§3.3)はこの差を測る操作的指標である。FEVER 系の事実検証タスクは3値ラベルが本システムの判定と同型であるため、抽出込みのエンドツーエンド評価に用いる。
+**知識グラフと RAG.** LLM と KG の統合は Pan et al. (2024) が KG-enhanced LLM / LLM-augmented KG / 相乗型の3枠組みに整理している。KBQA の系譜(MetaQA 上の代表手法として EmbedKGQA; Saxena et al., 2020)、GraphRAG (Edge et al., 2024)、および KG 上をエージェントが探索する Think-on-Graph (Sun et al., 2024) は、構造化知識による LLM の接地を目指す。しかし多くの構成では、検索されたトリプルを文脈に注入して最終判断を LLM に委ねる(Think-on-Graph では探索・枝刈り・推論の主体が LLM であり、GraphRAG では KG 自体が LLM の生成物である)。これに対し本研究では判定自体(entailed/contradicted/unknown)を OWL-RL 閉包上の決定論的照合が行い、LLM は判定結果を報告する側に回る。B1(long-context)/ B1′(オラクル検索)ベースラインとの比較はこの設計差の効果を直接測る。
 
-**LLM とソフトウェア検証.** LLM による形式検証支援(仕様生成、不変条件合成)や、property-based testing との統合が研究されている。本研究のハイブリッドコーディングモードは、完全な形式検証ではなく「危ういロジックの局所的な証明/反証」という軽量な統合点を選び、SMT の反例を回帰テストへ直結させる点、およびループ終了条件の形式化による完了判定(loop-judge)を含む点に特徴がある。
+**自己検証とハルシネーション検出.** Self-Consistency (Wang et al., 2023)、SelfCheckGPT (Manakul et al., 2023)、Chain-of-Verification (Dhuliawala et al., 2024) 等の self-verification 系は、検証器も確率的であるという循環性を持つ(CoVe の4段階検証はすべて LLM 内部で完結する)。本研究の kb_verify / smt_verify は被検証器と機構を共有しない外部の決定論的検証器であり、偽検証率(§3.3)はこの差を測る操作的指標である。FEVER (Thorne et al., 2018) 系の事実検証タスクは3値ラベルが本システムの判定と同型であるため、抽出込みのエンドツーエンド評価に用いる。
 
-(文献リストは投稿時に整備 — TBD)
+**LLM とソフトウェア検証.** LLM による形式検証支援として、ループ不変条件の生成・ランキング (Chakraborty et al., 2023; Bharti et al., 2025) や形式仕様の自動生成 (SpecGen; Ma et al., 2025) が研究されており、いずれも「LLM 生成物を決定論的検証器が裁定する」構図を持つ。本研究のハイブリッドコーディングモードは、完全な形式検証ではなく「危ういロジックの局所的な証明/反証」という軽量な統合点を選び、SMT の反例を回帰テストへ直結させる点、およびループ終了条件の形式化による完了判定(loop-judge)を含む点に特徴がある。
+
+**近接する同時代研究.** 本研究に最も近いのは次の2系統である。(i)**LLM+複数ソルバー**: MCP-Solver (Szeider, 2025) は MCP 経由で LLM を MiniZinc・PySAT・Z3 に接続し、「LLM が定式化、ソルバーが求解」の分業と複数ソルバー統合を実現する。ただしソルバーへのツールアクセス層であり、永続 KB・出典管理・検証を組み込んだエージェントループを持たない。(ii)**KG 上の LLM エージェント**: SymAgent (Liu et al., 2025) は KG を動的環境とみなし LLM エージェント(Planner/Executor)が多段推論するが、推論の主体は LLM であり決定論的推論器には委譲しない。また永続 KG をエージェントメモリとする Zep (Rasmussen et al., 2025) や A-MEM (Xu et al., 2025) は保存を構造化するが、記憶の構築・検索・整合性判断が LLM/埋め込みに依存し、決定論的な含意・矛盾判定を持たない。整理すると、メモリ系は「保存はするが推論・検証が LLM 依存」、ソルバー・検証系は「検証はするが単発タスクで永続知識がない」— 本研究は両者(永続 KB + 決定論的判定 + 複数ソルバー + 委譲)を単一エージェントに統合し、その寄与をアブレーションで分離する点で異なる。
 
 ---
 
@@ -249,6 +251,51 @@ C1/C2 の全誤答を次の3層に分類する。分類は2名(または LLM 判
 ## 8. Conclusion
 
 LLM を定式化器に限定し、事実の保存・推論・検証・求解を決定論的な記号層に委ねる分業アーキテクチャを提案し、エージェント `nsai` として実装した。合成 KB による制御実験と KB 付き公開ベンチマークでの評価により、偽検証率の低減(TBD)、KB 規模に対する頑健性(TBD)、矛盾検出精度(TBD)、境界バグの検出・修正とテスト品質の改善(TBD)を示した。残存誤りが定式化層に局在するという分析(TBD)は、「LLM の検証をどう信じるか」という問題を「LLM の翻訳をどう検査するか」というより小さな問題に還元できることを示唆する。今後の課題として、閉包計算の増分化による大規模 KB への拡張、OWL-RL を超える表現力(数値範囲・存在量化)の段階的導入、他 LLM ファミリーへの一般化検証が挙げられる。
+
+---
+
+## References
+
+全書誌は一次情報源(公式プロシーディングス・ACL Anthology・arXiv・DBLP・Crossref)で検証済み(2026-07-07 時点)。
+
+- Austin, J., Odena, A., Nye, M., Bosma, M., Michalewski, H., Dohan, D., Jiang, E., Cai, C., Terry, M., Le, Q., Sutton, C. (2021). Program Synthesis with Large Language Models. arXiv:2108.07732 [preprint].
+- Bharti, V., Jha, S., Kumar, D., Jalote, P. (2025). Loop Invariant Generation: A Hybrid Framework of Reasoning optimised LLMs and SMT Solvers. arXiv:2508.00419 [preprint, under review].
+- Chakraborty, S., Lahiri, S. K., Fakhoury, S., Musuvathi, M., Lal, A., Rastogi, A., Senthilnathan, A., Sharma, R., Swamy, N. (2023). Ranking LLM-Generated Loop Invariants for Program Verification. Findings of EMNLP 2023. arXiv:2310.09342.(著者順は ACL Anthology 版に従う)
+- Chen, M., Tworek, J., Jun, H., Yuan, Q., et al. (2021). Evaluating Large Language Models Trained on Code. arXiv:2107.03374 [preprint].(HumanEval)
+- Chen, W., Ma, X., Wang, X., Cohen, W. W. (2023). Program of Thoughts Prompting: Disentangling Computation from Reasoning for Numerical Reasoning Tasks. TMLR 2023. arXiv:2211.12588.
+- Chowdhury, N., Aung, J., Shern, C. J., et al. (2024). Introducing SWE-bench Verified. OpenAI. https://openai.com/index/introducing-swe-bench-verified/ [Web 資料; 著者欄は投稿前に原典ページで要目視確認]
+- Dhuliawala, S., Komeili, M., Xu, J., Raileanu, R., Li, X., Celikyilmaz, A., Weston, J. (2024). Chain-of-Verification Reduces Hallucination in Large Language Models. Findings of ACL 2024, pp. 3563–3578. arXiv:2309.11495.
+- Edge, D., Trinh, H., Cheng, N., Bradley, J., Chao, A., Mody, A., Truitt, S., Metropolitansky, D., Ness, R. O., Larson, J. (2024). From Local to Global: A Graph RAG Approach to Query-Focused Summarization. arXiv:2404.16130 [preprint; 投稿前に venue 再確認].
+- Ganguly, D., Iyengar, S., Chaudhary, V., Kalyanaraman, S. (2024). Proof of Thought: Neurosymbolic Program Synthesis allows Robust and Interpretable Reasoning. NeurIPS 2024 System-2 Reasoning At Scale Workshop. arXiv:2409.17270.
+- Gao, L., Madaan, A., Zhou, S., Alon, U., Liu, P., Yang, Y., Callan, J., Neubig, G. (2023). PAL: Program-aided Language Models. ICML 2023, PMLR 202:10764–10799. arXiv:2211.10435.
+- Garcez, A. d'A., Lamb, L. C. (2023). Neurosymbolic AI: the 3rd wave. Artificial Intelligence Review, 56(11), 12387–12406. arXiv:2012.05876. DOI 10.1007/s10462-023-10448-w.
+- Ho, X., Duong Nguyen, A.-K., Sugawara, S., Aizawa, A. (2020). Constructing A Multi-hop QA Dataset for Comprehensive Evaluation of Reasoning Steps. COLING 2020, pp. 6609–6625. arXiv:2011.01060.(2WikiMultiHopQA)
+- Jain, N., Han, K., Gu, A., Li, W.-D., Yan, F., Zhang, T., Wang, S., Solar-Lezama, A., Sen, K., Stoica, I. (2025). LiveCodeBench: Holistic and Contamination Free Evaluation of Large Language Models for Code. ICLR 2025. arXiv:2403.07974.
+- Jimenez, C. E., Yang, J., Wettig, A., Yao, S., Pei, K., Press, O., Narasimhan, K. (2024). SWE-bench: Can Language Models Resolve Real-World GitHub Issues? ICLR 2024. arXiv:2310.06770.
+- Kautz, H. A. (2022). The third AI summer: AAAI Robert S. Engelmore Memorial Lecture. AI Magazine, 43(1), 105–125. DOI 10.1002/aaai.12036.
+- Lin, D., Koppel, J., Chen, A., Solar-Lezama, A. (2017). QuixBugs: A Multi-Lingual Program Repair Benchmark Set Based on the Quixey Challenge. SPLASH Companion 2017, pp. 55–56. DOI 10.1145/3135932.3135941.
+- Liu, B., Zhang, J., Lin, F., Yang, C., Peng, M., Yin, W. (2025). SymAgent: A Neural-Symbolic Self-Learning Agent Framework for Complex Reasoning over Knowledge Graphs. WWW 2025. arXiv:2502.03283. DOI 10.1145/3696410.3714768.
+- Liu, J., Xia, C. S., Wang, Y., Zhang, L. (2023). Is Your Code Generated by ChatGPT Really Correct? Rigorous Evaluation of Large Language Models for Code Generation. NeurIPS 2023. arXiv:2305.01210.(EvalPlus / HumanEval+ / MBPP+)
+- Ma, L., Liu, S., Li, Y., Xie, X., Bu, L. (2025). SpecGen: Automated Generation of Formal Program Specifications via Large Language Models. ICSE 2025. arXiv:2401.08807. DOI 10.1109/ICSE55347.2025.00129.
+- Manakul, P., Liusie, A., Gales, M. J. F. (2023). SelfCheckGPT: Zero-Resource Black-Box Hallucination Detection for Generative Large Language Models. EMNLP 2023, pp. 9004–9017. arXiv:2303.08896.
+- Olausson, T. X., Gu, A., Lipkin, B., Zhang, C. E., Solar-Lezama, A., Tenenbaum, J. B., Levy, R. (2023). LINC: A Neurosymbolic Approach for Logical Reasoning by Combining Language Models with First-Order Logic Provers. EMNLP 2023, pp. 5153–5176. arXiv:2310.15164.(Outstanding Paper Award)
+- Pan, L., Albalak, A., Wang, X., Wang, W. Y. (2023). Logic-LM: Empowering Large Language Models with Symbolic Solvers for Faithful Logical Reasoning. Findings of EMNLP 2023, pp. 3806–3824. arXiv:2305.12295.
+- Pan, S., Luo, L., Wang, Y., Chen, C., Wang, J., Wu, X. (2024). Unifying Large Language Models and Knowledge Graphs: A Roadmap. IEEE TKDE, 36(7), 3580–3599. arXiv:2306.08302. DOI 10.1109/TKDE.2024.3352100.
+- Rasmussen, P., Paliychuk, P., Beauvais, T., Ryan, J., Chalef, D. (2025). Zep: A Temporal Knowledge Graph Architecture for Agent Memory. arXiv:2501.13956 [preprint].
+- Saparov, A., He, H. (2023). Language Models Are Greedy Reasoners: A Systematic Formal Analysis of Chain-of-Thought. ICLR 2023. arXiv:2210.01240.(PrOntoQA)
+- Sarker, M. K., Zhou, L., Eberhart, A., Hitzler, P. (2021). Neuro-symbolic artificial intelligence. AI Communications, 34(3), 197–209. arXiv:2105.05330. DOI 10.3233/AIC-210084.
+- Saxena, A., Tripathi, A., Talukdar, P. (2020). Improving Multi-hop Question Answering over Knowledge Graphs using Knowledge Base Embeddings. ACL 2020, pp. 4498–4507. DOI 10.18653/v1/2020.acl-main.412.(EmbedKGQA)
+- Schick, T., Dwivedi-Yu, J., Dessì, R., Raileanu, R., Lomeli, M., Hambro, E., Zettlemoyer, L., Cancedda, N., Scialom, T. (2023). Toolformer: Language Models Can Teach Themselves to Use Tools. NeurIPS 2023. arXiv:2302.04761.(著者リストは camera-ready 版9名に従う)
+- Sinha, K., Sodhani, S., Dong, J., Pineau, J., Hamilton, W. L. (2019). CLUTRR: A Diagnostic Benchmark for Inductive Reasoning from Text. EMNLP-IJCNLP 2019, pp. 4506–4515. arXiv:1908.06177.
+- Sun, J., Xu, C., Tang, L., Wang, S., Lin, C., Gong, Y., Ni, L. M., Shum, H.-Y., Guo, J. (2024). Think-on-Graph: Deep and Responsible Reasoning of Large Language Model on Knowledge Graph. ICLR 2024. arXiv:2307.07697.
+- Szeider, S. (2025). MCP-Solver: Integrating Language Models with Constraint Programming Systems. arXiv:2501.00539 [preprint].
+- Tafjord, O., Dalvi, B., Clark, P. (2021). ProofWriter: Generating Implications, Proofs, and Abductive Statements over Natural Language. Findings of ACL-IJCNLP 2021, pp. 3621–3634. DOI 10.18653/v1/2021.findings-acl.317.
+- Thorne, J., Vlachos, A., Christodoulopoulos, C., Mittal, A. (2018). FEVER: a Large-scale Dataset for Fact Extraction and VERification. NAACL-HLT 2018, pp. 809–819. DOI 10.18653/v1/N18-1074.
+- Wang, X., Wei, J., Schuurmans, D., Le, Q., Chi, E., Narang, S., Chowdhery, A., Zhou, D. (2023). Self-Consistency Improves Chain of Thought Reasoning in Language Models. ICLR 2023. arXiv:2203.11171.
+- Xu, W., Liang, Z., Mei, K., Gao, H., Tan, J., Zhang, Y. (2025). A-MEM: Agentic Memory for LLM Agents. NeurIPS 2025. arXiv:2502.12110.
+- Yao, S., Zhao, J., Yu, D., Du, N., Shafran, I., Narasimhan, K., Cao, Y. (2023). ReAct: Synergizing Reasoning and Acting in Language Models. ICLR 2023. arXiv:2210.03629.
+- Ye, X., Chen, Q., Dillig, I., Durrett, G. (2023). SatLM: Satisfiability-Aided Language Models Using Declarative Prompting. NeurIPS 2023. arXiv:2305.09656.
+- Zhang, Y., Dai, H., Kozareva, Z., Smola, A., Song, L. (2018). Variational Reasoning for Question Answering with Knowledge Graph. AAAI 2018. arXiv:1709.04071. DOI 10.1609/aaai.v32i1.12057.(MetaQA — データセット名は論文本文でなく公式リポジトリ由来)
 
 ---
 
