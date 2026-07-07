@@ -219,11 +219,15 @@ def test_grade_no_tests_collected_kills_nothing() -> None:
     assert graded["mutation_score"] == 0.0
 
 
-def test_grade_tests_failing_on_original_are_flagged() -> None:
+def test_grade_tests_failing_on_original_kill_nothing() -> None:
+    # An invalid suite (fails the correct implementation) must score 0, not
+    # 100%: its mutant failures carry no information.
     ms = mutants(RATE, "rate")[:1]
     wrong = "from target import rate\n\ndef test_wrong():\n    assert rate(1, 2) == 51\n"
     graded = grade_tests(wrong, RATE, ms, timeout=30.0)
-    assert graded["tests_pass_original"] is False  # invalid suite, flagged
+    assert graded["tests_pass_original"] is False
+    assert graded["kill_matrix"] == [0]
+    assert graded["mutation_score"] == 0.0
 
 
 def test_grade_timeout_counts_as_killed() -> None:

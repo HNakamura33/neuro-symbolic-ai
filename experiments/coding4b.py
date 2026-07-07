@@ -288,13 +288,20 @@ def grade_tests(
     """
     if test_source:
         baseline = run_pytest(correct_source, test_source, timeout)
+    else:
+        baseline = "none"
+    if baseline == "pass":
         kill = [
             1 if run_pytest(m.source, test_source, timeout) in ("fail", "timeout")
             else 0
             for m in muts
         ]
     else:
-        baseline, kill = "none", [0] * len(muts)
+        # A suite that cannot pass the ORIGINAL provides no evidence: its
+        # failures on mutants are indistinguishable from its failures on
+        # correct code, so it kills nothing (otherwise an always-failing
+        # suite would score 100%).
+        kill = [0] * len(muts)
     n_boundary = sum(m.op_class in BOUNDARY_CLASSES for m in muts)
     killed_boundary = sum(
         k for k, m in zip(kill, muts) if m.op_class in BOUNDARY_CLASSES
