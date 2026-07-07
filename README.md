@@ -135,6 +135,7 @@ uv run nsai kb show
 uv run nsai kb query "SELECT ?s WHERE { ?s a ns:Human }"
 uv run nsai kb infer                                  # 推論結果を実体化
 uv run nsai kb export backup.ttl                      # / kb import backup.ttl
+uv run nsai kb build-from-code src/                   # ast で構造的事実を抽出(LLM不要)
 uv run nsai kb stats
 ```
 

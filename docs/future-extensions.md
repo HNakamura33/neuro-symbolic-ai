@@ -1,6 +1,6 @@
 # 将来の拡張
 
-ステータス: 構想(未実装) / 起案: 2026-07-07
+ステータス: 拡張1は構想(未実装)、拡張2の `kb build-from-code` は実装済み / 起案: 2026-07-07
 
 - [拡張1: サブエージェントへの決定論的推論の委譲](#拡張1-サブエージェントへの決定論的推論の委譲)
 - [拡張2: 静的解析による KB 構築(code2kb)](#拡張2-静的解析による-kb-構築code2kb)
@@ -225,11 +225,11 @@ README の「会話や文書から事実をトリプルとして抽出」は、�
 ## 実装スケッチ
 
 ```sh
-nsai kb build-from-code src/          # LLM 不要、ast.walk で抽出
-nsai ingest --jsonl history.jsonl     # 会話履歴をターン毎に整形して抽出
+nsai kb build-from-code src/          # ✅ 実装済み(src/nsai/code2kb.py)
+nsai ingest --jsonl history.jsonl     # 未実装: 会話履歴をターン毎に整形して抽出
 ```
 
-- `ast.walk` で上記述語のトリプルを抽出し、`source="<ファイルパス> (static-analysis)"`
+- `ast` visitor で上記述語のトリプルを抽出し、`source="<ファイルパス> (static-analysis)"`
   で provenance を記録。再実行時は差分のみ追加(add_triples が重複除去済み)
 - コード変更後に再実行すれば、古い契約との矛盾が kb_verify で浮上する
 - 対象言語は Python から。多言語対応は tree-sitter 導入時に検討
