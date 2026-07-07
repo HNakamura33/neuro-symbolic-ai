@@ -1,0 +1,8 @@
+{
+  "name": "point_in_interval",
+  "category": "interval-arithmetic",
+  "bug_type": "inclusive-exclusive-end",
+  "source": "handwritten",
+  "feasible": true,
+  "entry_point": "point_in_interval"
+}

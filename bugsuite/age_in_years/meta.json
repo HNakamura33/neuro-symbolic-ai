@@ -1,0 +1,8 @@
+{
+  "name": "age_in_years",
+  "category": "date-handling",
+  "bug_type": "comparison-operator",
+  "source": "handwritten",
+  "feasible": true,
+  "entry_point": "age_in_years"
+}

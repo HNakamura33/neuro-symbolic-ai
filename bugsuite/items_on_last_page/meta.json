@@ -1,0 +1,8 @@
+{
+  "name": "items_on_last_page",
+  "category": "pagination",
+  "bug_type": "plus-minus-one",
+  "source": "handwritten",
+  "feasible": true,
+  "entry_point": "items_on_last_page"
+}

@@ -1,0 +1,8 @@
+{
+  "name": "infeasible-total-pages",
+  "category": "pagination",
+  "bug_type": "spec-contradiction",
+  "source": "handwritten",
+  "feasible": false,
+  "entry_point": "total_pages_strict"
+}

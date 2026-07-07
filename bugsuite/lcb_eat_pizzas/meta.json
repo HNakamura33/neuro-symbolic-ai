@@ -1,0 +1,9 @@
+{
+  "name": "lcb_eat_pizzas",
+  "category": "rounding",
+  "bug_type": "wrong-rounding-mode",
+  "source": "livecodebench",
+  "feasible": true,
+  "entry_point": "maxWeight",
+  "lcb_problem_id": "3779"
+}

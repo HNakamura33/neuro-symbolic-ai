@@ -1,0 +1,9 @@
+{
+  "name": "lcb_count_mentions",
+  "category": "date-handling",
+  "bug_type": "comparison-operator",
+  "source": "livecodebench",
+  "feasible": true,
+  "entry_point": "countMentions",
+  "lcb_problem_id": "3721"
+}

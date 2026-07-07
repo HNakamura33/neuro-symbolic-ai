@@ -1,0 +1,8 @@
+{
+  "name": "round_half_up",
+  "category": "rounding",
+  "bug_type": "wrong-rounding-mode",
+  "source": "handwritten",
+  "feasible": true,
+  "entry_point": "round_half_up"
+}

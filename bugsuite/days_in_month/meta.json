@@ -1,0 +1,8 @@
+{
+  "name": "days_in_month",
+  "category": "date-handling",
+  "bug_type": "leap-year-edge",
+  "source": "handwritten",
+  "feasible": true,
+  "entry_point": "days_in_month"
+}

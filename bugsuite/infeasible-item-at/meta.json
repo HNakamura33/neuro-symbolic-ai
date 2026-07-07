@@ -1,0 +1,8 @@
+{
+  "name": "infeasible-item-at",
+  "category": "index-calculation",
+  "bug_type": "spec-contradiction",
+  "source": "handwritten",
+  "feasible": false,
+  "entry_point": "item_at"
+}

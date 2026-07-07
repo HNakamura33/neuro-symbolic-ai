@@ -1,0 +1,9 @@
+{
+  "name": "lcb_max_adjacent_distance",
+  "category": "index-calculation",
+  "bug_type": "off-by-one",
+  "source": "livecodebench",
+  "feasible": true,
+  "entry_point": "maxAdjacentDistance",
+  "lcb_problem_id": "3747"
+}

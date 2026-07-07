@@ -1,0 +1,9 @@
+{
+  "name": "lcb_subarray_sum",
+  "category": "index-calculation",
+  "bug_type": "inclusive-exclusive-end",
+  "source": "livecodebench",
+  "feasible": true,
+  "entry_point": "subarraySum",
+  "lcb_problem_id": "3731"
+}

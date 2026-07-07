@@ -1,0 +1,8 @@
+{
+  "name": "total_pages",
+  "category": "pagination",
+  "bug_type": "off-by-one",
+  "source": "handwritten",
+  "feasible": true,
+  "entry_point": "total_pages"
+}
