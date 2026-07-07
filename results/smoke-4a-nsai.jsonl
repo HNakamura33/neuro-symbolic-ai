@@ -1,0 +1,2 @@
+{"task_id": "paginate", "condition": "nsai", "model": "sonnet", "passed": true, "n_cases": 10, "cases_failed": [], "cost_usd": 0.0573237, "seconds": 29.26, "tool_calls": {"Glob": 1, "Read": 1, "Edit": 1, "mcp__symbolic__smt_verify": 2}, "cases_skipped": [], "run": 0}
+{"task_id": "maxContainers", "condition": "nsai", "model": "sonnet", "passed": true, "n_cases": 10, "cases_failed": [], "cost_usd": 0.1383203, "seconds": 72.86, "tool_calls": {"Glob": 1, "Read": 1, "Edit": 1, "mcp__symbolic__smt_verify": 11}, "cases_skipped": [], "run": 0}
