@@ -1,6 +1,6 @@
 # 記号層に接地された LLM エージェント: 知識グラフ・制約ソルバー・SMT による検証可能なニューロシンボリック分業
 
-**ドラフト v0.4** — 本実行の実験結果は未記入(TBD)、パイロット結果(§4.0)のみ記入済み。実験設計は [experiment-plan.md](experiment-plan.md)、書誌検証の記録は [related-work-survey.md](related-work-survey.md) を参照。引用文献は全件一次情報源で書誌検証済み(2026-07-07)。
+**ドラフト v0.5** — 本実行の実験結果は未記入(TBD)、パイロット結果(§4.0)と図1–図5 は記入済み。実験設計は [experiment-plan.md](experiment-plan.md)、書誌検証の記録は [related-work-survey.md](related-work-survey.md) を参照。引用文献は全件一次情報源で書誌検証済み(2026-07-07)。
 投稿先候補: NeSy / AAAI・IJCAI(ニューロシンボリック枠)/ ACL・EMNLP Findings(tool-augmented LLM 枠)。
 
 ---
@@ -43,7 +43,34 @@ LLM ベースのエージェントは、質問応答・知識管理・コーデ�
 
 ## 2. System
 
-`nsai` は Claude Agent SDK 上に構築されたエージェント CLI である。図1に全体アーキテクチャを示す(本ドラフトでは README の Mermaid 図を転載予定 — TBD)。
+`nsai` は Claude Agent SDK 上に構築されたエージェント CLI である。図1に全体アーキテクチャを示す。
+
+```mermaid
+flowchart TB
+    User([ユーザー]) <--> Agent["メインエージェント(ニューラル層)<br/>Claude — 理解・定式化・統合<br/>(Claude Agent SDK)"]
+
+    Agent <-- "Task 委譲(§2.4)" --> Sub
+
+    subgraph Sub["専門サブエージェント"]
+        direction LR
+        EX["symbolic-explorer<br/>(小型モデル)"]
+        AU["kb-auditor<br/>(小型モデル)"]
+        PR["prover ほか"]
+    end
+
+    Agent <--> MCP["in-process MCP サーバ『symbolic』(§2.3)<br/>9種の記号ツールのみ許可<br/>ファイル・bash・ネットワークは遮断"]
+    Sub <--> MCP
+
+    subgraph Symbolic["記号層(決定論的)"]
+        MCP --> KB["kb.py — rdflib + owlrl<br/>OWL-RL 閉包 cl(G)・判定 V(G, t)"]
+        MCP --> CSP["csp.py — python-constraint<br/>有限領域 CSP の厳密解列挙"]
+        MCP --> SMT["smt.py — Z3<br/>証明 / 反例生成"]
+    end
+
+    KB --> TTL[("kb.ttl(Turtle 永続化)<br/>kb.prov.jsonl(出典写像 σ)")]
+```
+
+**図1: `nsai` の全体アーキテクチャ。** ニューラル層(メインエージェントとサブエージェント)は MCP ツール境界を通じてのみ記号層に到達でき、事実の保存・推論・検証・求解はすべて記号層の決定論的コンポーネントが行う。通常モードではファイル・bash・ネットワークが遮断されるため、エージェントが記号層を迂回して外界に触れる経路は存在しない。
 
 ### 2.1 設計原則
 
@@ -82,7 +109,19 @@ V(G, t) = \begin{cases} \textbf{entailed} & \text{if } t \in \mathrm{cl}(G) \\[4
 ```math
 \Pr[\mathrm{error}] \;\le\; \underbrace{\Pr[f_\theta(a) \not\simeq a]}_{\text{formalization}} \;+\; \underbrace{\Pr[\mathrm{inexpressible}]}_{\text{symbolic layer}}
 ```
-と上から抑えられる(第1項は定式化の不忠実、第2項は記号層の表現力不足)。すなわち確率的な誤りは定式化層に局在する。これは SatLM (Ye et al., 2023) の「パースされた仕様に対する解の正しさ」保証と同型であり、§5 の層別誤り分析の理論的根拠である。
+と上から抑えられる(第1項は定式化の不忠実、第2項は記号層の表現力不足)。すなわち確率的な誤りは定式化層に局在する。これは SatLM (Ye et al., 2023) の「パースされた仕様に対する解の正しさ」保証と同型であり、§5 の層別誤り分析の理論的根拠である。図2にこのパイプラインと誤りの生じうる箇所を示す。
+
+```mermaid
+flowchart LR
+    A["自然言語主張 a"] --> F["定式化器 f_θ<br/>LLM(確率的)"]
+    F -- "記号表現 t = f_θ(a)<br/>または (Γ, φ)" --> V["判定 V(G, t) / smt_verify(Γ, φ)<br/>OWL-RL 閉包照合・Z3(決定論的)"]
+    V --> R["entailed / contradicted / unknown<br/>proved / counterexample"]
+
+    F -.-> EF["誤り源 E_form:<br/>定式化の不忠実(f_θ(a) が a を表現しない)"]
+    V -.-> ES["誤り源 E_solv:<br/>表現力の限界・タイムアウト"]
+```
+
+**図2: 検証パイプラインと誤りの局在。** 確率的な機構は定式化器 $`f_\theta`$ のみであり、判定は決定論的に計算される。したがって誤りは $`E_{\mathrm{form}}`$(不忠実な定式化)と $`E_{\mathrm{solv}}`$(記号層の表現力不足)に分解される。エージェント統合に固有の第3の誤り源 $`E_{\mathrm{deleg}}`$(委譲の不履行・結論の誤統合)は §2.4 の委譲機構に属する。§5 の層別誤り分析はこの分解に基づく。
 
 ### 2.3 エージェントループとツール境界
 
@@ -115,6 +154,29 @@ V(G, t) = \begin{cases} \textbf{entailed} & \text{if } t \in \mathrm{cl}(G) \\[4
 3. **境界・オフバイワン監査** — ループ範囲・ページネーション・日付演算を整数制約として符号化し、目視でなく証明で確認する。
 4. **プロジェクト記憶** — 証明済みインバリアントや API 契約を出典付きで KB に蓄積し、後の変更が記録と矛盾すれば `contradicted` として検出する。
 
+```mermaid
+flowchart TB
+    User([ユーザー]) <--> Agent["nsai code — エージェントループ<br/>(ニューラル層: 理解・設計・実装・定式化)"]
+
+    subgraph Neural["ニューラル層 — コーディング作業"]
+        Agent <--> FT["Read / Glob / Grep / Edit / Write"]
+        FT <--> Code[("コードベース")]
+        Agent -. "コマンドごとに確認" .-> Bash["Bash(テスト実行など)"]
+    end
+
+    subgraph Symbolic["記号層 — 決定論的検証チェックポイント"]
+        SMT["smt_verify(Z3)<br/>① 入力検証 ② 出力検証<br/>③ 境界・オフバイワン監査"]
+        KBV["kb_verify / kb_add_triples<br/>④ プロジェクト記憶との矛盾検出"]
+    end
+
+    Agent -- "主張を定式化" --> SMT
+    SMT -- "proved / 反例(→回帰テスト化)" --> Agent
+    Agent -- "契約・インバリアントを記録/照合" --> KBV
+    KBV -- "entailed / contradicted" --> Agent
+```
+
+**図3: ハイブリッドコーディングモード。** コーディング作業自体はニューラル層がファイル操作ツールで行い、記号層は上記①–④の検証チェックポイントとして機能する。SMT の反例は具体的な変数割当であり、そのまま回帰テストに変換される。
+
 ---
 
 ## 3. Experimental Setup
@@ -129,6 +191,33 @@ V(G, t) = \begin{cases} \textbf{entailed} & \text{if } t \in \mathrm{cl}(G) \\[4
 | **B1** | LLM + 全事実(KB の全トリプルを Turtle のまま)をプロンプトに同梱する long-context ベースライン。最も強い比較対象 |
 | **C1** | nsai(記号ツールあり・サブエージェント委譲なし)。記号層そのものの寄与 |
 | **C2** | nsai フル(委譲あり)。委譲の追加寄与はアブレーション C2−C1 で測る |
+
+```mermaid
+flowchart TB
+    subgraph B0["B0 — LLM 単体"]
+        direction TB
+        b0q["質問のみ"] --> b0l["LLM"] --> b0a["回答"]
+    end
+    subgraph B1["B1 — long-context"]
+        direction TB
+        b1q["質問 + KB 全トリプル<br/>(Turtle 同梱)"] --> b1l["LLM"] --> b1a["回答"]
+    end
+    subgraph C1["C1 — 記号ツール"]
+        direction TB
+        c1q["質問"] --> c1l["LLM"]
+        c1l <--> c1s["記号層<br/>(9ツール)"]
+        c1l --> c1a["回答"]
+    end
+    subgraph C2["C2 — 記号ツール + 委譲"]
+        direction TB
+        c2q["質問"] --> c2l["LLM"]
+        c2l <--> c2d["サブエージェント<br/>(Task)"]
+        c2d <--> c2s["記号層<br/>(9ツール)"]
+        c2l --> c2a["回答"]
+    end
+```
+
+**図4: 比較条件の情報経路。** B0/B1 はツールを持たず、事実はプロンプト経由でのみ与えられる(B0 はゼロ、B1 は全量)。C1/C2 は同一の事実集合を記号層経由でのみ参照し、両者の差は委譲の有無だけである。
 
 C1/C2 の実装差分はエージェント構成の `subagents` フラグのみであり、他の交絡はない。B1 が文脈長制約で全トリプルを同梱できない場合(MetaQA)、質問エンティティの 2-hop 近傍のみを同梱するオラクル検索付き long-context(B1′)に置き換える — これは実務の RAG 構成に対応する。
 
@@ -228,6 +317,24 @@ KB に対する主張の3値判定(entailed / contradicted / unknown)。合成�
 2. **479 トリプルでは B1 も天井**: B1/C1/C2 は全問正解。この規模では long-context ベースラインが十分機能しており、仮説どおりなら B1 の劣化は KB 規模スケーリング(実験2)で現れる。条件間の差はまずコスト構造に出た: KB 全文同梱の B1 は主張判定で \$0.025/問 に対し、必要な照合だけをツールで行う C1 は \$0.015、委譲する C2 は \$0.008 と最安。一方レイテンシはツール往復分 C1/C2 が長い。
 3. **ハーネスの改善点**: B0 で構造化抽出に失敗した回答が1件あり(20×4条件中)、回答フォーマット指示を強化した。本パイロットの結果をもってメトリクス定義を凍結した。
 
+```mermaid
+xychart-beta
+    title "主張判定: 平均コスト/問(USD)"
+    x-axis ["B0", "B1", "C1", "C2"]
+    y-axis "USD/問" 0 --> 0.03
+    bar [0.0038, 0.0250, 0.0148, 0.0081]
+```
+
+```mermaid
+xychart-beta
+    title "マルチホップ QA: 平均コスト/問(USD)"
+    x-axis ["B0", "B1", "C1", "C2"]
+    y-axis "USD/問" 0 --> 0.03
+    bar [0.0031, 0.0269, 0.0263, 0.0174]
+```
+
+**図5: パイロットのコスト構造(haiku、各セル n=10、1 run — 予備値)。** 主張判定では、KB 全文を毎問同梱する B1 に対し、必要な照合だけをツールで行う C1 が約4割安く、委譲する C2 が最安となる。マルチホップ QA では C1 の探索ツールコールがメイン文脈に蓄積して B1 と同等のコストまで嵩む一方、C2 は探索を安価なサブエージェントに逃がすことでコストを吸収する — 委譲の便益が探索の多いタスクで先に現れるという観察であり、実験2の損益分岐分析($`n^*`$、§3.3)の動機となる。B0 は事実を参照しないため最安だが、表0 のとおり正答できない。
+
 ### 4.1 主張検証とハルシネーション抑制(RQ1)
 
 **表1: 3値主張判定(合成 KB、各ラベル 100 問、5 run 平均±SD)**
@@ -249,7 +356,7 @@ KB に対する主張の3値判定(entailed / contradicted / unknown)。合成�
 
 ### 4.2 マルチホップ QA とスケーリング(RQ2)
 
-**図2: KB 規模 × Exact Match(ホップ数別)** — TBD(B1 の劣化曲線 vs C1/C2 の平坦さ)
+**図6: KB 規模 × Exact Match(ホップ数別)** — TBD(B1 の劣化曲線 vs C1/C2 の平坦さ)
 
 **表3: MetaQA 1/2/3-hop EM(既存 KB-QA / LLM 系手法との比較)** — TBD
 
@@ -278,7 +385,7 @@ KB に対する主張の3値判定(entailed / contradicted / unknown)。合成�
 
 ### 4.5 副次分析(RQ5, RQ6)
 
-**図3: 委譲モデル別のコスト×精度パレート(haiku vs sonnet explorer/auditor)** — TBD
+**図7: 委譲モデル別のコスト×精度パレート(haiku vs sonnet explorer/auditor)** — TBD
 
 **表10: code2kb vs LLM 抽出のエッジ再現率、影響分析正答率** — TBD
 
