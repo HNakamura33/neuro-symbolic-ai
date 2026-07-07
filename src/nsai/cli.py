@@ -69,20 +69,31 @@ def code(
     prompt: Optional[str] = typer.Argument(
         None, help="One-shot coding task (omit for an interactive session)"
     ),
+    full_auto: bool = typer.Option(
+        False,
+        "--full-auto",
+        help="Allow ALL tools including bash without per-command confirmation. "
+        "Intended for sandboxes and experiment harnesses.",
+    ),
     kb: Optional[Path] = KBPathOption,
     model: Optional[str] = ModelOption,
 ):
     """Hybrid coding mode: file tools + symbolic verification (SMT/CSP/KB).
 
     File reads and edits run automatically; every bash command asks for
-    confirmation first.
+    confirmation first (unless --full-auto).
     """
     from .agent import run_chat, run_once
 
+    if full_auto:
+        console.print(
+            "[yellow]full-auto: bash runs WITHOUT confirmation — "
+            "use only in a sandbox or trusted workspace.[/yellow]"
+        )
     if prompt:
-        asyncio.run(run_once(_kb_path(kb), prompt, model, coding=True))
+        asyncio.run(run_once(_kb_path(kb), prompt, model, coding=True, full_auto=full_auto))
     else:
-        asyncio.run(run_chat(_kb_path(kb), model, coding=True))
+        asyncio.run(run_chat(_kb_path(kb), model, coding=True, full_auto=full_auto))
 
 
 @app.command()

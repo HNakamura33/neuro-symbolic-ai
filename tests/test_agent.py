@@ -29,6 +29,21 @@ def test_coding_mode_adds_file_tools_but_gates_bash(kb: KnowledgeBase):
     assert opts.permission_mode is None
 
 
+def test_full_auto_allows_bash_without_confirmation(kb: KnowledgeBase):
+    opts = build_options(kb, coding=True, full_auto=True)
+    assert "Bash" in opts.allowed_tools
+    for name in ALLOWED_TOOL_NAMES + CODING_TOOLS + ["Task"]:
+        assert name in opts.allowed_tools
+    # No confirmation callback; everything outside the allowlist is denied.
+    assert opts.can_use_tool is None
+    assert opts.permission_mode == "dontAsk"
+
+
+def test_full_auto_requires_coding_mode(kb: KnowledgeBase):
+    with pytest.raises(ValueError):
+        build_options(kb, full_auto=True)
+
+
 @pytest.mark.asyncio
 async def test_confirm_tool_denies_non_bash():
     result = await _confirm_tool("WebFetch", {"url": "https://x"}, None)

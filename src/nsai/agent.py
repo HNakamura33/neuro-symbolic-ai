@@ -52,11 +52,29 @@ async def _confirm_tool(
 
 
 def build_options(
-    kb: KnowledgeBase, model: str | None = None, coding: bool = False
+    kb: KnowledgeBase,
+    model: str | None = None,
+    coding: bool = False,
+    full_auto: bool = False,
 ) -> ClaudeAgentOptions:
     server = build_server(kb)
     agents = build_agents(coding=coding)
+    if full_auto and not coding:
+        raise ValueError("full_auto is only meaningful in coding mode")
     if coding:
+        if full_auto:
+            # Full-auto mode: Bash runs without per-command confirmation.
+            # Still an explicit allowlist — anything outside file tools,
+            # Bash, Task, and the symbolic server (network etc.) is denied.
+            return ClaudeAgentOptions(
+                system_prompt=CODE_SYSTEM_PROMPT,
+                model=model,
+                mcp_servers={"symbolic": server},
+                allowed_tools=ALLOWED_TOOL_NAMES + CODING_TOOLS + ["Task", "Bash"],
+                agents=agents,
+                permission_mode="dontAsk",
+                setting_sources=[],
+            )
         # Hybrid mode: file tools + symbolic solvers. Bash is gated behind a
         # per-command user confirmation (also when a subagent runs it);
         # anything else is denied.
@@ -101,25 +119,35 @@ async def _render_response(client: ClaudeSDKClient, show_cost: bool = False) -> 
 
 
 async def run_once(
-    kb_path: Path, prompt: str, model: str | None = None, coding: bool = False
+    kb_path: Path,
+    prompt: str,
+    model: str | None = None,
+    coding: bool = False,
+    full_auto: bool = False,
 ) -> None:
     """One-shot: send a single prompt and print the response."""
     kb = KnowledgeBase(kb_path)
-    options = build_options(kb, model, coding=coding)
+    options = build_options(kb, model, coding=coding, full_auto=full_auto)
     async with ClaudeSDKClient(options=options) as client:
         await client.query(prompt)
         await _render_response(client, show_cost=True)
 
 
 async def run_chat(
-    kb_path: Path, model: str | None = None, coding: bool = False
+    kb_path: Path,
+    model: str | None = None,
+    coding: bool = False,
+    full_auto: bool = False,
 ) -> None:
     """Interactive multi-turn REPL sharing one session."""
     kb = KnowledgeBase(kb_path)
-    options = build_options(kb, model, coding=coding)
+    options = build_options(kb, model, coding=coding, full_auto=full_auto)
 
     stats = kb.stats()
-    mode = "coding (hybrid)" if coding else "neuro-symbolic agent"
+    if coding:
+        mode = "coding (full-auto)" if full_auto else "coding (hybrid)"
+    else:
+        mode = "neuro-symbolic agent"
     console.print(
         f"[bold]nsai[/bold] — {mode}  "
         f"[dim](KB: {kb_path}, {stats['triples']} triples — /exit to quit)[/dim]"
