@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from experiments.kbgen import Dataset, generate, inject_contradictions
+from experiments.kbgen import Dataset, generate, inject_contradictions, write_audit_kb
 from nsai.kb import KnowledgeBase
 
 
@@ -68,3 +68,21 @@ def test_injected_contradictions_are_detectable_by_sparql(ds: Dataset, tmp_path:
     # provenance separates the disagreeing sources
     s, p, o = injected[0]
     assert any(rec["source"] == "injected" for rec in kb.provenance(s, p, o))
+
+
+def test_injection_goes_to_audit_copy_and_leaves_kb_clean(ds: Dataset, tmp_path: Path):
+    """Injection must not mutate kb.ttl: a functional conflict entails
+    owl:sameAs merges under OWL-RL, which would flip claim/QA gold labels."""
+    ds.save(tmp_path)
+    before = (tmp_path / "kb.ttl").read_bytes()
+    injected = write_audit_kb(tmp_path, ds, n=5, seed=1)
+    assert (tmp_path / "kb.ttl").read_bytes() == before
+    audit = KnowledgeBase(tmp_path / "kb-audit.ttl")
+    assert len(audit.graph) == len(KnowledgeBase(tmp_path / "kb.ttl").graph) + 5
+    # audit copy carries provenance for injected triples under their own source
+    s, p, o = injected[0]
+    assert any(rec["source"] == "injected" for rec in audit.provenance(s, p, o))
+    # a contradicted claim keeps its gold label on the clean KB
+    claim = next(c for c in ds.claims if c.label == "contradicted")
+    kb = KnowledgeBase(tmp_path / "kb.ttl")
+    assert kb.verify_triple(claim.subject, claim.predicate, claim.object).verdict == "contradicted"

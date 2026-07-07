@@ -99,6 +99,10 @@ def build_condition_options(
         return ClaudeAgentOptions(
             system_prompt=BASELINE_SYSTEM,
             model=model,
+            # tools=[] removes every built-in tool; allowed_tools=[] alone only
+            # empties the auto-permission list, and with dontAsk the baseline
+            # could still read the dataset KB off disk via Bash.
+            tools=[],
             allowed_tools=[],
             permission_mode="dontAsk",
             setting_sources=[],

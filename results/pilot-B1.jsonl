@@ -1,0 +1,4 @@
+{"task_id": "claim-0", "task_type": "claims", "condition": "B1", "model": "haiku", "gold": "entailed", "pred": "entailed", "correct": true, "cost_usd": 0.024799, "seconds": 7.53, "tool_calls": {}, "kind": "explicit", "run": 0}
+{"task_id": "claim-1", "task_type": "claims", "condition": "B1", "model": "haiku", "gold": "unknown", "pred": "unknown", "correct": true, "cost_usd": 0.029248, "seconds": 17.2, "tool_calls": {}, "kind": "silent", "run": 0}
+{"task_id": "claim-2", "task_type": "claims", "condition": "B1", "model": "haiku", "gold": "contradicted", "pred": "contradicted", "correct": true, "cost_usd": 0.025339, "seconds": 8.87, "tool_calls": {}, "kind": "functional_conflict", "run": 0}
+{"task_id": "claim-3", "task_type": "claims", "condition": "B1", "model": "haiku", "gold": "contradicted", "pred": "contradicted", "correct": true, "cost_usd": 0.026014000000000002, "seconds": 10.41, "tool_calls": {}, "kind": "functional_conflict", "run": 0}
