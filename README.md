@@ -162,6 +162,10 @@ KB ファイルは既定で `./kb.ttl`(`--kb` オプション or `NSAI_KB` 環�
 uv run pytest        # テスト(26件)
 ```
 
+## ロードマップ
+
+- [サブエージェントへの決定論的推論の委譲](docs/future-extensions.md) — symbolic-explorer(知識グラフの agentic search)/ kb-auditor(矛盾の系統的走査)
+
 ## 矛盾検出のモデリングのコツ
 
 1つの主語に対して1つの値しか取れないプロパティ(出生地・首都など)は
