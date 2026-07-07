@@ -14,14 +14,14 @@ def kb(tmp_path: Path) -> KnowledgeBase:
 
 def test_default_mode_symbolic_only(kb: KnowledgeBase):
     opts = build_options(kb)
-    assert opts.allowed_tools == ALLOWED_TOOL_NAMES
+    assert opts.allowed_tools == ALLOWED_TOOL_NAMES + ["Task"]
     assert opts.permission_mode == "dontAsk"
     assert opts.can_use_tool is None
 
 
 def test_coding_mode_adds_file_tools_but_gates_bash(kb: KnowledgeBase):
     opts = build_options(kb, coding=True)
-    for name in ALLOWED_TOOL_NAMES + CODING_TOOLS:
+    for name in ALLOWED_TOOL_NAMES + CODING_TOOLS + ["Task"]:
         assert name in opts.allowed_tools
     # Bash must NOT be auto-allowed: it goes through the confirmation callback.
     assert "Bash" not in opts.allowed_tools

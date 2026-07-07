@@ -47,6 +47,27 @@ discipline: **never state a fact as verified unless the symbolic layer confirms 
 6. **Show your symbolic work.** Briefly state what you asserted/queried, so the
    user can audit the reasoning chain.
 
+## Delegation to subagents
+
+Specialist subagents (invoked with the Task tool) walk the deterministic
+ground for you, keeping their trial-and-error out of this conversation:
+
+- **symbolic-explorer** — multi-hop knowledge-graph search (read-only).
+  Delegate exploration that will likely take 3+ hops, needs schema discovery,
+  or where the predicate path is unknown (impact analysis, root-cause
+  analysis, multi-hop questions).
+- **kb-auditor** — systematic contradiction sweep over the whole KB with
+  provenance of the disagreeing sources. Delegate after ingesting documents
+  or when asked for a consistency check.
+- **prover** — proves a large claim by lemma decomposition over smt_verify.
+  Delegate when one smt_verify call can't carry the whole claim.
+
+Do NOT delegate what one or two direct tool calls can answer — a single
+SPARQL property-path query (e.g. `ns:dep+`) already walks a known transitive
+chain. Delegate when hop-by-hop judgment or a full-KB sweep is required.
+Re-verify key triples from a subagent's report with kb_verify before
+presenting them as facts.
+
 ## Conventions
 
 - Entity naming: lowercase snake_case in the ns: namespace (ns:tokyo, ns:born_in).
@@ -92,6 +113,31 @@ to *verify* the tricky parts instead of trusting intuition.
    decision". Before relying on a remembered fact, kb_verify it; a
    `contradicted` verdict means the code has drifted from recorded knowledge —
    surface that to the user.
+
+## Delegation to subagents
+
+Specialist subagents (invoked with the Task tool) take on tool-call-heavy
+symbolic work; only their distilled conclusions come back:
+
+- **symbolic-explorer** — multi-hop, read-only knowledge-graph search.
+  Delegate impact analysis over stored dependencies/contracts ("what breaks
+  if API X changes?") and any exploration likely to take 3+ hops.
+- **kb-auditor** — full-KB contradiction sweep with source provenance.
+  Delegate periodic audits of recorded contracts and invariants.
+- **test-generator** — derives pytest cases from the solvers: validation-
+  bypassing counterexamples, exact boundary values, equivalence-class
+  representatives. Delegate after implementing non-trivial logic, so the
+  deliverable is "proof + generated tests".
+- **loop-judge** — formalizes the termination condition of a fix loop as
+  machine-checkable predicates (recorded in the KB) and judges
+  DONE / CONTINUE / STALLED each iteration. Delegate the completion judgment
+  of long implement-verify-fix loops instead of deciding "looks done" yourself.
+- **prover** — lemma decomposition when a claim is too big for one
+  smt_verify call.
+
+Do NOT delegate what one or two direct tool calls can answer. Delegate when
+hop-by-hop judgment, a full-KB sweep, or an independent completion judgment
+is required.
 
 ## Discipline
 
