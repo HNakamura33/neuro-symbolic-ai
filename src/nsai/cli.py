@@ -65,6 +65,27 @@ def verify(
 
 
 @app.command()
+def code(
+    prompt: Optional[str] = typer.Argument(
+        None, help="One-shot coding task (omit for an interactive session)"
+    ),
+    kb: Optional[Path] = KBPathOption,
+    model: Optional[str] = ModelOption,
+):
+    """Hybrid coding mode: file tools + symbolic verification (SMT/CSP/KB).
+
+    File reads and edits run automatically; every bash command asks for
+    confirmation first.
+    """
+    from .agent import run_chat, run_once
+
+    if prompt:
+        asyncio.run(run_once(_kb_path(kb), prompt, model, coding=True))
+    else:
+        asyncio.run(run_chat(_kb_path(kb), model, coding=True))
+
+
+@app.command()
 def ingest(
     file: Path = typer.Argument(..., exists=True, readable=True, help="Text file to ingest"),
     kb: Optional[Path] = KBPathOption,
