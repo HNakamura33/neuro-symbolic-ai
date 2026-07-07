@@ -171,20 +171,22 @@ async def run_dataset(
         tasks = tasks[:limit]
     facts_ttl = (dataset / "kb.ttl").read_text(encoding="utf-8") if condition == "B1" else None
     out.parent.mkdir(parents=True, exist_ok=True)
-    with out.open("a", encoding="utf-8") as f:
-        for run in range(runs):
-            # Scratch copy so agent-side kb_add_triples can't pollute the dataset.
-            with tempfile.TemporaryDirectory() as tmp:
-                kb_copy = Path(tmp) / "kb.ttl"
-                shutil.copy(dataset / "kb.ttl", kb_copy)
-                for i, task in enumerate(tasks):
-                    record = await run_task(task, task_type, condition, model, kb_copy, facts_ttl)
-                    record["run"] = run
+    for run in range(runs):
+        # Scratch copy so agent-side kb_add_triples can't pollute the dataset.
+        with tempfile.TemporaryDirectory() as tmp:
+            kb_copy = Path(tmp) / "kb.ttl"
+            shutil.copy(dataset / "kb.ttl", kb_copy)
+            for i, task in enumerate(tasks):
+                record = await run_task(task, task_type, condition, model, kb_copy, facts_ttl)
+                record["run"] = run
+                # Open per record: a long-lived handle loses everything after
+                # its inode is replaced, and one lost record is recoverable.
+                with out.open("a", encoding="utf-8") as f:
                     f.write(json.dumps(record, ensure_ascii=False) + "\n")
-                    f.flush()
-                    mark = "+" if record["correct"] else "-"
-                    print(f"[{condition} run{run} {i + 1}/{len(tasks)}] {mark} "
-                          f"{task['id']} pred={record['pred']} gold={record['gold']}")
+                mark = "+" if record["correct"] else "-"
+                print(f"[{condition} run{run} {i + 1}/{len(tasks)}] {mark} "
+                      f"{task['id']} pred={record['pred']} gold={record['gold']}",
+                      flush=True)
 
 
 def main() -> None:
