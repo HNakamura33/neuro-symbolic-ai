@@ -17,7 +17,7 @@ LLM は自然言語の理解と定式化だけを担い、**事実の保存・�
 
 ```mermaid
 flowchart TB
-    User([ユーザー]) <--> CLI["nsai CLI (typer)<br/>chat / ask / verify / ingest / kb *"]
+    User([ユーザー]) <--> CLI["nsai CLI (typer)<br/>chat / ask / verify / ingest / code / kb *"]
 
     CLI <--> Agent["エージェントループ<br/>Claude Agent SDK — ClaudeSDKClient"]
     CLI -- "kb * サブコマンド<br/>(LLMなしの直接操作)" --> KB
@@ -26,7 +26,7 @@ flowchart TB
         Agent <--> Claude["Claude<br/>自然言語理解・トリプル/制約への定式化"]
     end
 
-    Agent <--> MCP["in-process MCP server『symbolic』<br/>permission_mode=dontAsk<br/>(ファイル・bash・ネットワークは遮断)"]
+    Agent <--> MCP["in-process MCP server『symbolic』<br/>permission_mode=dontAsk<br/>(通常モード: ファイル・bash・ネットワークは遮断)"]
 
     subgraph Symbolic["シンボリック層"]
         MCP --> T1["kb_add_triples<br/>kb_find / kb_sparql<br/>kb_verify / kb_infer<br/>kb_stats / kb_provenance"]
@@ -87,7 +87,35 @@ uv run nsai code                          # 対話コーディングセッショ
 uv run nsai code "pager.py の page_count を境界バグ監査して"   # ワンショット
 ```
 
-コーディングはニューラル層(ファイル操作ツール)が行い、危ういロジックの検証だけシンボリック層に委ねるモード:
+コーディングはニューラル層(ファイル操作ツール)が行い、危ういロジックの検証だけシンボリック層に委ねるモード。
+
+```mermaid
+flowchart TB
+    User([ユーザー]) <--> Agent["nsai code — エージェントループ<br/>(Claude: 理解・設計・実装・定式化)"]
+
+    subgraph Neural["ニューラル層 — コーディング作業"]
+        Agent <--> FT["Read / Glob / Grep / Edit / Write<br/>(自動許可)"]
+        FT <--> Code[("コードベース")]
+        Agent -. "コマンドごと" .-> Gate{"y/N 確認<br/>can_use_tool"}
+        Gate -- 承認 --> Bash["Bash<br/>(テスト実行など)"]
+        Gate -- 拒否 --> Agent
+    end
+
+    subgraph Symbolic["シンボリック層 — 決定論的検証チェックポイント"]
+        SMT["smt_verify (Z3)<br/>① 入力検証: バリデーション突破値の探索<br/>② 出力検証: 実装後の主張を証明<br/>③ 境界・オフバイワン監査"]
+        CSP["csp_solve<br/>④ 設定・割当・順序の厳密解"]
+        KBV["kb_verify / kb_add_triples<br/>⑤ プロジェクト記憶との矛盾検出"]
+    end
+
+    Agent -- "主張を定式化" --> SMT
+    SMT -- "proved / 反例(→回帰テスト化)" --> Agent
+    Agent -- "制約を定式化" --> CSP
+    CSP -- "全解 / 解なし" --> Agent
+    Agent -- "契約・インバリアントを記録/照合" --> KBV
+    KBV -- "entailed / contradicted" --> Agent
+```
+
+シンボリック層の使いどころ:
 
 - **入力検証** — バリデーションを通過しても事前条件を破れる値がないか `smt_verify` で探索。反例 = 具体的な攻撃/エッジ入力 → ガード追加 + 回帰テスト化
 - **出力検証** — 実装後に「このガード下では返り値は必ず [0, len-1] 内」等の主張を Z3 で証明。反証されたらコードを修正し、反例をテストケースに変換
