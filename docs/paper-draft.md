@@ -1,6 +1,6 @@
 # 記号層に接地された LLM エージェント: 知識グラフ・制約ソルバー・SMT による検証可能なニューロシンボリック分業
 
-**ドラフト v0.3** — 本実行の実験結果は未記入(TBD)、パイロット結果(§4.0)のみ記入済み。実験設計は [experiment-plan.md](experiment-plan.md)、書誌検証の記録は [related-work-survey.md](related-work-survey.md) を参照。引用文献は全件一次情報源で書誌検証済み(2026-07-07)。
+**ドラフト v0.4** — 本実行の実験結果は未記入(TBD)、パイロット結果(§4.0)のみ記入済み。実験設計は [experiment-plan.md](experiment-plan.md)、書誌検証の記録は [related-work-survey.md](related-work-survey.md) を参照。引用文献は全件一次情報源で書誌検証済み(2026-07-07)。
 投稿先候補: NeSy / AAAI・IJCAI(ニューロシンボリック枠)/ ACL・EMNLP Findings(tool-augmented LLM 枠)。
 
 ---
@@ -37,7 +37,7 @@ LLM ベースのエージェントは、質問応答・知識管理・コーデ�
 
 ### 1.1 Scope
 
-本論文は汎用コーディングエージェントとしての総合的優位を主張しない。主張の守備範囲は「明示的な事実・制約・境界条件が関与するタスクにおいて、記号層への接地が検証可能性と精度を改善する」ことである。リポジトリ探索や API 理解が律速となるタスク(フル SWE-bench)、シェル操作・環境構築が主体のタスク(Terminal-Bench 等)は測定対象と直交するため対象外とし、代わりに主張の範囲内である境界バグサブセット(§3.5.4)で実リポジトリへの外的妥当性を確認する。どこで効き、どこでは効かないかを明示することが、本論文の誠実な主張形式である。
+本論文は汎用コーディングエージェントとしての総合的優位を主張しない。主張の守備範囲は「明示的な事実・制約・境界条件が関与するタスクにおいて、記号層への接地が検証可能性と精度を改善する」ことである。リポジトリ探索や API 理解が律速となるタスク(フル SWE-bench)、シェル操作・環境構築が主体のタスク(Terminal-Bench 等)は測定対象と直交するため対象外とし、代わりに主張の範囲内である境界バグサブセット(実験4d、§3.7)で実リポジトリへの外的妥当性を確認する。どこで効き、どこでは効かないかを明示することが、本論文の誠実な主張形式である。
 
 ---
 
@@ -51,11 +51,33 @@ LLM ベースのエージェントは、質問応答・知識管理・コーデ�
 
 ### 2.2 記号層
 
-**知識グラフ(kb.py)** — rdflib による RDF グラフを Turtle ファイルに永続化する。全追加はソース(出典)付きで provenance ログ(JSONL)に記録される。推論は owlrl による OWL-RL 閉包で行い、`rdfs:subClassOf` 連鎖、`owl:FunctionalProperty`、`owl:sameAs` / `owl:differentFrom` 等を扱う。主張検証 `kb_verify(s, p, o)` は閉包上の照合により **entailed**(閉包が含む)/ **contradicted**(閉包と衝突する — functional プロパティ衝突、differentFrom 衝突等)/ **unknown**(KB が沈黙)の3値と根拠を返す。1値プロパティ(出生地・首都等)を `owl:FunctionalProperty` として宣言することで、異なる値の主張が矛盾として検出可能になる。
+**知識グラフ(kb.py)** — KB は RDF トリプルの有限集合 $G = \{(s, p, o)\}$ として表現され、Turtle ファイルに永続化される。全追加は出典写像 $\sigma$(トリプル → 情報源)として provenance ログ(JSONL)に記録される。推論は OWL-RL ルール集合 $\mathcal{R}$ による演繹閉包で行う:
 
-**CSP(csp.py)** — python-constraint による有限領域制約充足。スケジューリング・割当・順序付け問題を厳密に解き、全解または解なしを返す。
+$$\mathrm{cl}(G) \;=\; \bigcap \{\, H \mid H \supseteq G,\ H \text{ is closed under } \mathcal{R} \,\}$$
 
-**SMT(smt.py)** — Z3 による数値・論理主張の証明。主張の否定が充足不能なら **proved**、充足可能なら**具体的な反例**を返す。反例はそのまま回帰テストの入力に変換できる。
+すなわち $G$ を含み $\mathcal{R}$ について閉じた最小のグラフ(最小不動点)である。$\mathrm{cl}$ は単調($G \subseteq \mathrm{cl}(G)$)かつ決定論的で、同じ $G$ に対して常に同じ閉包を返す(owlrl による実装)。扱う語彙は `rdfs:subClassOf` 連鎖、`owl:FunctionalProperty`、`owl:sameAs` / `owl:differentFrom` 等の OWL-RL プロファイルである。主張検証 `kb_verify` は、主張トリプル $t = (s, p, o)$ に対する全域的・決定論的な判定関数 $V(G, t)$ であり、次のように定義される:
+
+$$V(G, t) = \begin{cases} \textbf{entailed} & \text{if } t \in \mathrm{cl}(G) \\[4pt] \textbf{contradicted} & \text{if } (p,\, \texttt{rdf:type},\, \texttt{owl:FunctionalProperty}) \in \mathrm{cl}(G) \,\wedge\, \exists\, o' \neq o.\ (s, p, o') \in \mathrm{cl}(G) \\ & \text{or } p = \texttt{owl:sameAs} \,\wedge\, (s,\, \texttt{owl:differentFrom},\, o) \in \mathrm{cl}(G) \\[4pt] \textbf{unknown} & \text{otherwise} \end{cases}$$
+
+1値プロパティ(出生地・首都等)を `owl:FunctionalProperty` として宣言することで、異なる値の主張が contradicted として検出可能になる。functional 衝突の判定は「異なる項は異なる個体を指す」という固有名仮定(UNA)を採用する — ただし $o$ と $o'$ が `owl:sameAs` で同一視される場合は閉包への伝播により第1分岐(entailed)が先に成立するため、誤検出は生じない。矛盾検出は健全側に不完全である: 上記2形以外の矛盾(OWL-RL で表現できない衝突)は unknown に落ち、「矛盾」と誤って断定されることはない。
+
+**CSP(csp.py)** — 有限領域制約充足。インスタンス $(X, D, C)$(変数 $X = (x_1, \dots, x_n)$、有限領域 $D_i$、制約集合 $C$)に対し、解集合
+
+$$\mathrm{Sol} = \{\, v \in D_1 \times \cdots \times D_n \mid \forall c \in C.\ v \models c \,\}$$
+
+を厳密に列挙する(python-constraint による実装。解数が上限を超える場合は打ち切りを明示)。$\mathrm{Sol} = \emptyset$(解なし)も確定的に報告される。
+
+**SMT(smt.py)** — Z3 による数値・論理主張の証明。仮定の連言 $\Gamma$ と目標 $\varphi$ に対し
+
+$$\mathrm{smt\_verify}(\Gamma, \varphi) = \begin{cases} \textbf{proved} & \text{if } \Gamma \wedge \neg\varphi \text{ が充足不能(このとき } \Gamma \models \varphi \text{)} \\ \textbf{counterexample } m & \text{if } m \models \Gamma \wedge \neg\varphi \end{cases}$$
+
+を返す。反例 $m$ は具体的な変数割当であり、そのまま回帰テストの入力に変換できる。目標を与えない場合は $\Gamma$ の充足判定(モデル探索)として働く。
+
+**検証の形式的性質(条件付き健全性)** — 自然言語主張 $a$ は LLM 定式化器 $f_\theta$ によって記号表現 $t = f_\theta(a)$(または $(\Gamma, \varphi)$)に写像され、判定は $V(G, t)$ が行う。$V$ と $\mathrm{cl}$ は決定論的なので、**$f_\theta(a)$ が $a$ を忠実に表現しているならば、判定は $\mathrm{cl}(G)$ に関して正しい**。したがってエンドツーエンドの誤りは
+
+$$\Pr[\text{error}] \;\le\; \Pr[f_\theta \text{ が不忠実}] \;+\; \Pr[\text{記号層の表現力不足}]$$
+
+と上から抑えられ、確率的な誤りは定式化層に局在する。これは SatLM (Ye et al., 2023) の「パースされた仕様に対する解の正しさ」保証と同型であり、§5 の層別誤り分析の理論的根拠である。
 
 ### 2.3 エージェントループとツール境界
 
@@ -115,19 +137,51 @@ C1/C2 の実装差分はエージェント構成の `subagents` フラグのみ�
 
 **汚染対策** — 3対策を全公開ベンチマークに適用する: (1)B0 を汚染プローブとして常時報告し、B0 正解項目を除いた uncontaminated サブセットを主表とする(全項目版は付録)。(2)B1/C1/C2 は同一の事実集合を見るため汚染は全条件に同方向に働き、条件間差分は依然有効 — 主張の根拠は絶対値でなく差分に置く。(3)MetaQA / CLUTRR にはエンティティ名を無作為固有名に置換した摂動版(KB ごと置換するため正解は保存)を用意し、原版とのギャップを LLM 記憶依存度の測定として報告する。記号層は置換に不変のため C1/C2 のギャップ ≈ 0 が予測となる。
 
-### 3.3 実験1: 主張検証とハルシネーション抑制(RQ1)
+### 3.3 指標と統計検定の形式的定義
 
-KB に対する主張の3値判定(entailed / contradicted / unknown)。合成データは各ラベル 100 問: entailed は明示トリプル 50 + **推論でのみ導ける** 50(subClassOf 連鎖、functional+sameAs)、contradicted は functional 衝突 50 + differentFrom 衝突 50、unknown は KB が沈黙する尤もらしい主張 100。指標は macro-F1、および本論文で最重要の**偽検証率** — 正解が contradicted / unknown の主張を「正しい/検証済み」と断定した割合(ハルシネーションの操作的定義)。unknown の正答率は独立に報告する(LLM は unknown を苦手とし当て推量する、が仮説)。
+タスク集合を $i \in \{1, \dots, N\}$、gold ラベルを $y_i$、システムの予測を $\hat{y}_i$ と書く。3値判定のラベル集合は $\Lambda = \{\textsf{e}, \textsf{c}, \textsf{u}\}$(entailed / contradicted / unknown)。
 
-### 3.4 実験2: マルチホップ QA と委譲の損益分岐(RQ2)
+**macro-F1(3値判定)** — ラベル $\ell \in \Lambda$ ごとに適合率 $P_\ell = \mathrm{TP}_\ell / (\mathrm{TP}_\ell + \mathrm{FP}_\ell)$、再現率 $R_\ell = \mathrm{TP}_\ell / (\mathrm{TP}_\ell + \mathrm{FN}_\ell)$、$F1_\ell = 2 P_\ell R_\ell / (P_\ell + R_\ell)$ とし、
 
-中間エンティティを要する質問への回答。合成 KB を規模 {100, 500, 2000, 5000} トリプル × ホップ数 k ∈ {2, 3, 4, 6} で生成し(各 50 問)、経路が事前に自明でない質問を半数含める。公開系は MetaQA(1/2/3-hop 各 200 問)・CLUTRR・2Wiki。回答は CURIE で返させ Exact Match で採点する。分析は(1)EM のホップ数 × KB 規模マトリクス、(2)B1 の劣化曲線 vs C1/C2 の平坦さ、(3)C1 vs C2 のコスト・レイテンシ・EM による委譲の損益分岐、(4)explorer が報告した根拠パスの全トリプル検証可能率(機械的に kb_verify に通す — 設計目標 100%)。C2 では委譲が実際に起きたかをツールログから確認し委譲率も報告する。
+$$\text{macro-F1} = \frac{1}{|\Lambda|} \sum_{\ell \in \Lambda} F1_\ell$$
 
-### 3.5 実験3: 矛盾検出の精度(RQ3)
+**偽検証率(FVR; 本論文の最重要指標)** — 正解が contradicted または unknown の主張を「正しい(entailed)」と断定した割合:
+
+$$\mathrm{FVR} = \frac{\left|\{\, i : y_i \in \{\textsf{c}, \textsf{u}\} \wedge \hat{y}_i = \textsf{e} \,\}\right|}{\left|\{\, i : y_i \in \{\textsf{c}, \textsf{u}\} \,\}\right|}$$
+
+これをハルシネーションの操作的定義とする。誤りの向きを区別しない accuracy と異なり、FVR は「誤って検証済みと断定する」失敗のみを数える。
+
+**Exact Match(QA)** — $\mathrm{EM} = \frac{1}{N} \sum_i \mathbb{1}[\hat{y}_i = y_i]$。表記揺れを排除するため回答は CURIE で返させ、文字列正規化後の完全一致で判定する。
+
+**矛盾検出(実験3)** — 注入した矛盾の集合を $D$、システムが報告した集合を $\hat{D}$ とし、$P = |D \cap \hat{D}| / |\hat{D}|$、$R = |D \cap \hat{D}| / |D|$、$F1$ はその調和平均。出典ペア特定率は、正しく検出された矛盾のうち食い違う情報源の対まで正しく特定できた割合 $|\{ d \in D \cap \hat{D} : \text{出典ペア正} \}| / |D \cap \hat{D}|$。
+
+**根拠パス検証可能率(実験2)** — explorer が回答とともに返す根拠パス $(t_1, \dots, t_k)$ に対し $\frac{1}{k} \sum_j \mathbb{1}[V(G, t_j) = \textsf{e}]$ を全質問で平均する。設計目標は 1.0(サブエージェントの報告が全トリプル機械検証可能であること)。
+
+**委譲の損益分岐(実験2)** — KB 規模 $n = |G|$ における条件 $X$ のコストを $\mathrm{cost}_X(n)$、精度を $\mathrm{EM}_X(n)$ とし、損益分岐点を
+
+$$n^* = \min \{\, n : \mathrm{cost}_{C2}(n) \le \mathrm{cost}_{C1}(n) \,\wedge\, \mathrm{EM}_{C2}(n) \ge \mathrm{EM}_{C1}(n) \,\}$$
+
+と定義する(委譲のオーバーヘッドが探索ツールコールの節約で回収される最小規模)。
+
+**Mutation score(実験4b)** — 生成された変異体の集合を $M$、テストスイートが検出(kill)した部分集合を $K \subseteq M$ とし $\mathrm{MS} = |K| / |M|$。境界変異(`<` ↔ `<=`、$\pm 1$ 定数等)の部分集合 $M_{\mathrm{bd}} \subseteq M$ に限定した $\mathrm{MS}_{\mathrm{bd}} = |K \cap M_{\mathrm{bd}}| / |M_{\mathrm{bd}}|$ を別掲する。
+
+**早期完了率(実験4c)** — $|\{\text{完了宣言時に隠しテストが失敗}\}| / |\{\text{完了宣言}\}|$。
+
+**統計検定** — 同一問題セットに対する対応あり比較を行う。2値正誤には McNemar 正確検定を用いる: 条件 A のみ正解の件数を $n_{10}$、条件 B のみ正解の件数を $n_{01}$ とし、帰無仮説(両条件の誤り確率が等しい)の下で $n_{10} \sim \mathrm{Bin}(n_{10} + n_{01},\, \tfrac{1}{2})$ となることから正確両側 $p$ 値を計算する(一致対は寄与しない)。連続値(コスト・F1 等)には paired bootstrap を用いる: タスク添字を復元抽出で $B = 10^4$ 回再標本化し、条件間差 $\Delta_b$ の経験分布から $p$ 値と 95% 信頼区間を得る。有意水準はいずれも 5%。
+
+### 3.4 実験1: 主張検証とハルシネーション抑制(RQ1)
+
+KB に対する主張の3値判定(entailed / contradicted / unknown)。合成データは各ラベル 100 問: entailed は明示トリプル 50 + **推論でのみ導ける** 50(subClassOf 連鎖、functional+sameAs)、contradicted は functional 衝突 50 + differentFrom 衝突 50、unknown は KB が沈黙する尤もらしい主張 100。指標は macro-F1 と偽検証率 FVR(定義は §3.3)。unknown の正答率は独立に報告する(LLM は unknown を苦手とし当て推量する、が仮説)。
+
+### 3.5 実験2: マルチホップ QA と委譲の損益分岐(RQ2)
+
+中間エンティティを要する質問への回答。合成 KB を規模 {100, 500, 2000, 5000} トリプル × ホップ数 k ∈ {2, 3, 4, 6} で生成し(各 50 問)、経路が事前に自明でない質問を半数含める。公開系は MetaQA(1/2/3-hop 各 200 問)・CLUTRR・2Wiki。回答は CURIE で返させ Exact Match で採点する。分析は(1)EM のホップ数 × KB 規模マトリクス、(2)B1 の劣化曲線 vs C1/C2 の平坦さ、(3)C1 vs C2 のコスト・レイテンシ・EM による委譲の損益分岐 $n^*$(定義は §3.3)、(4)explorer が報告した根拠パスの検証可能率(各トリプルを機械的に $V(G, \cdot)$ に通す — 設計目標 1.0)。C2 では委譲が実際に起きたかをツールログから確認し委譲率も報告する。
+
+### 3.6 実験3: 矛盾検出の精度(RQ3)
 
 クリーンな合成 KB(500 / 2000 トリプル)に矛盾を c ∈ {5, 20} 件注入し(functional 衝突、sameAs/differentFrom 衝突、および推論を経てのみ衝突する subClassOf 経由のケースを半数)、注入時に相異なる出典を provenance に記録する。B1(全トリプル+全出典ログを文脈で読ませる)/ C1 / C2(kb-auditor 委譲)で、検出の Precision / Recall / F1、出典ペア特定率、コストを比較する。KB 規模増大時の Recall の低下(B1 は文脈長で崩れる、が仮説)を報告する。
 
-### 3.6 実験4: ハイブリッドコーディング(RQ4)
+### 3.7 実験4: ハイブリッドコーディング(RQ4)
 
 **(4a)境界バグの監査・修正** — QuixBugs(Python 40 問)+ 自作境界バグスイート 30 問(ページネーション・区間演算・インデックス・日付・丸め。半数は LiveCodeBench カットオフ後問題の正解実装にバグを植えた汚染フリー構成、隠しテストを別途保持)。素のコーディングエージェント(ファイルツールのみ)vs `nsai code`(SMT あり)で、バグ検出率・修正後の隠しテスト通過率・SMT 反例の回帰テスト化率を測る。
 
@@ -137,7 +191,7 @@ KB に対する主張の3値判定(entailed / contradicted / unknown)。合成�
 
 **(4d)SWE-bench Verified 境界バグサブセット(副次)** — gold パッチが境界・数値条件の小変更(比較演算子の変更、±1 定数、min/max・範囲チェック、日付/インデックス演算)であるタスクをパッチの AST 差分による機械フィルタで 30–50 問抽出する(フィルタ条件とヒット数を報告)。`nsai code` vs 記号ツールのみを除いたアブレーションで、SWE-bench 公式ハーネスによる解決率と smt_verify の実使用率を測る。**条件間差分のみ**を主張に使い、絶対スコアは参考値とする。
 
-### 3.7 副次実験(RQ5, RQ6)
+### 3.8 副次実験(RQ5, RQ6)
 
 **RQ5**: 実験2・3の C2 で explorer/auditor を haiku → sonnet に変えた条件を追加し、コスト×精度のパレートを描く。**RQ6**: OSS リポジトリ 3–5 件に対し、(a)code2kb と LLM 抽出のエッジ再現率の突き合わせ(ast 出力を正解系とする)、(b)影響分析 20 問を構造層あり/なしで explorer に解かせた正答率比較。
 
@@ -226,13 +280,13 @@ KB に対する主張の3値判定(entailed / contradicted / unknown)。合成�
 
 > **注: 数値は実験後に記入。本節では誤りを層別する分析枠組みを規定する。**
 
-C1/C2 の全誤答を次の3層に分類する。分類は2名(または LLM 判定 + 人手検証)で行い一致率を報告する:
+C1/C2 の誤答集合 $E$ を、互いに素な3層 $E = E_{\mathrm{form}} \uplus E_{\mathrm{deleg}} \uplus E_{\mathrm{solv}}$ に分割し、各層の比率 $|E_{\bullet}| / |E|$ を報告する。§2.2 の条件付き健全性より、記号層が決定論的である限り $E_{\mathrm{form}}$ と $E_{\mathrm{solv}}$ で誤りは尽きるはずであり、$E_{\mathrm{deleg}}$ はエージェント統合に固有の追加誤り源である。分類は2名(または LLM 判定 + 人手検証)で行い一致率を報告する:
 
-1. **定式化層(ニューラル)** — LLM が自然言語を誤った記号表現に写像した(誤ったトリプル分解、誤った SPARQL、誤った SMT 符号化)。記号層は与えられた式を正しく評価している。
-2. **委譲層(エージェント)** — 委譲すべき場面で委譲しなかった、またはサブエージェントの結論を誤って統合した。
-3. **ソルバー層(記号)** — 表現力の限界(OWL-RL で表せない含意、写像除外)またはタイムアウト。
+1. **定式化層 $E_{\mathrm{form}}$(ニューラル)** — LLM が自然言語を誤った記号表現に写像した($f_\theta(a)$ が $a$ に不忠実: 誤ったトリプル分解、誤った SPARQL、誤った SMT 符号化)。記号層は与えられた式を正しく評価している。
+2. **委譲層 $E_{\mathrm{deleg}}$(エージェント)** — 委譲すべき場面で委譲しなかった、またはサブエージェントの結論を誤って統合した。
+3. **ソルバー層 $E_{\mathrm{solv}}$(記号)** — 表現力の限界(OWL-RL で表せない含意、写像除外)またはタイムアウト。
 
-**仮説**: 記号層導入後に残る誤りは定式化層にほぼ局在する(TBD %)。これが確認されれば、「検証の信頼性問題が、より小さく検査可能な定式化の正しさ問題に還元された」ことになり、本アーキテクチャの最も強い証拠となる。定式化ミスの下位分類(語彙選択、方向の取り違え、量化の誤り等)と代表例: TBD。
+**仮説**: 記号層導入後に残る誤りは定式化層にほぼ局在する($|E_{\mathrm{form}}| / |E| = $ TBD %)。これが確認されれば、「検証の信頼性問題が、より小さく検査可能な定式化の正しさ問題に還元された」ことになり、本アーキテクチャの最も強い証拠となる。定式化ミスの下位分類(語彙選択、方向の取り違え、量化の誤り等)と代表例: TBD。
 
 委譲不履行が観測された場合は、委譲を強制した条件 C2′ を追加し、方針遵守の問題と上限性能を分離する: TBD。
 
