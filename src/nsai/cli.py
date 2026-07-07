@@ -72,8 +72,16 @@ def code(
     full_auto: bool = typer.Option(
         False,
         "--full-auto",
-        help="Allow ALL tools including bash without per-command confirmation. "
-        "Intended for sandboxes and experiment harnesses.",
+        help="Allow the coding tool set including bash without per-command "
+        "confirmation (network etc. stays denied). Intended for sandboxes "
+        "and experiment harnesses.",
+    ),
+    bypass: bool = typer.Option(
+        False,
+        "--bypass-permissions",
+        help="DANGEROUS: no allowlist at all — every tool the runtime offers "
+        "(including network) runs unconfirmed. Only for disposable sandboxes. "
+        "Supersedes --full-auto.",
     ),
     kb: Optional[Path] = KBPathOption,
     model: Optional[str] = ModelOption,
@@ -81,19 +89,30 @@ def code(
     """Hybrid coding mode: file tools + symbolic verification (SMT/CSP/KB).
 
     File reads and edits run automatically; every bash command asks for
-    confirmation first (unless --full-auto).
+    confirmation first (unless --full-auto / --bypass-permissions).
     """
     from .agent import run_chat, run_once
 
-    if full_auto:
+    if bypass:
+        console.print(
+            "[red]bypass-permissions: ALL tools (including network) run "
+            "WITHOUT confirmation — use only in a disposable sandbox.[/red]"
+        )
+    elif full_auto:
         console.print(
             "[yellow]full-auto: bash runs WITHOUT confirmation — "
             "use only in a sandbox or trusted workspace.[/yellow]"
         )
     if prompt:
-        asyncio.run(run_once(_kb_path(kb), prompt, model, coding=True, full_auto=full_auto))
+        asyncio.run(
+            run_once(
+                _kb_path(kb), prompt, model, coding=True, full_auto=full_auto, bypass=bypass
+            )
+        )
     else:
-        asyncio.run(run_chat(_kb_path(kb), model, coding=True, full_auto=full_auto))
+        asyncio.run(
+            run_chat(_kb_path(kb), model, coding=True, full_auto=full_auto, bypass=bypass)
+        )
 
 
 @app.command()

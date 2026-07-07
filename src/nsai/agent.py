@@ -56,12 +56,25 @@ def build_options(
     model: str | None = None,
     coding: bool = False,
     full_auto: bool = False,
+    bypass: bool = False,
 ) -> ClaudeAgentOptions:
     server = build_server(kb)
     agents = build_agents(coding=coding)
-    if full_auto and not coding:
-        raise ValueError("full_auto is only meaningful in coding mode")
+    if (full_auto or bypass) and not coding:
+        raise ValueError("full_auto/bypass are only meaningful in coding mode")
     if coding:
+        if bypass:
+            # Bypass mode: NO allowlist, no gates — every tool the runtime
+            # offers (including network) runs unconfirmed. Only for
+            # disposable sandboxes; supersedes full_auto when both are set.
+            return ClaudeAgentOptions(
+                system_prompt=CODE_SYSTEM_PROMPT,
+                model=model,
+                mcp_servers={"symbolic": server},
+                agents=agents,
+                permission_mode="bypassPermissions",
+                setting_sources=[],
+            )
         if full_auto:
             # Full-auto mode: Bash runs without per-command confirmation.
             # Still an explicit allowlist — anything outside file tools,
@@ -124,10 +137,11 @@ async def run_once(
     model: str | None = None,
     coding: bool = False,
     full_auto: bool = False,
+    bypass: bool = False,
 ) -> None:
     """One-shot: send a single prompt and print the response."""
     kb = KnowledgeBase(kb_path)
-    options = build_options(kb, model, coding=coding, full_auto=full_auto)
+    options = build_options(kb, model, coding=coding, full_auto=full_auto, bypass=bypass)
     async with ClaudeSDKClient(options=options) as client:
         await client.query(prompt)
         await _render_response(client, show_cost=True)
@@ -138,14 +152,20 @@ async def run_chat(
     model: str | None = None,
     coding: bool = False,
     full_auto: bool = False,
+    bypass: bool = False,
 ) -> None:
     """Interactive multi-turn REPL sharing one session."""
     kb = KnowledgeBase(kb_path)
-    options = build_options(kb, model, coding=coding, full_auto=full_auto)
+    options = build_options(kb, model, coding=coding, full_auto=full_auto, bypass=bypass)
 
     stats = kb.stats()
     if coding:
-        mode = "coding (full-auto)" if full_auto else "coding (hybrid)"
+        if bypass:
+            mode = "coding (bypass-permissions)"
+        elif full_auto:
+            mode = "coding (full-auto)"
+        else:
+            mode = "coding (hybrid)"
     else:
         mode = "neuro-symbolic agent"
     console.print(

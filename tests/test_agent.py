@@ -44,6 +44,24 @@ def test_full_auto_requires_coding_mode(kb: KnowledgeBase):
         build_options(kb, full_auto=True)
 
 
+def test_bypass_drops_allowlist_entirely(kb: KnowledgeBase):
+    opts = build_options(kb, coding=True, bypass=True)
+    assert opts.permission_mode == "bypassPermissions"
+    # No allowlist: every runtime tool (network included) is available.
+    assert not opts.allowed_tools
+    assert opts.can_use_tool is None
+    # Symbolic layer and subagents are still wired in.
+    assert "symbolic" in opts.mcp_servers
+    assert opts.agents
+
+
+def test_bypass_supersedes_full_auto_and_requires_coding(kb: KnowledgeBase):
+    opts = build_options(kb, coding=True, full_auto=True, bypass=True)
+    assert opts.permission_mode == "bypassPermissions"
+    with pytest.raises(ValueError):
+        build_options(kb, bypass=True)
+
+
 @pytest.mark.asyncio
 async def test_confirm_tool_denies_non_bash():
     result = await _confirm_tool("WebFetch", {"url": "https://x"}, None)
