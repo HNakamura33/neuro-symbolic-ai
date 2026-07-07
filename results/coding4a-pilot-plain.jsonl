@@ -1,0 +1,3 @@
+{"task_id": "bitcount", "condition": "plain", "model": "sonnet", "passed": true, "n_cases": 9, "cases_failed": [], "cost_usd": 0.0424505, "seconds": 11.26, "tool_calls": {"Read": 1, "Edit": 1}, "cases_skipped": [], "run": 0}
+{"task_id": "bucketsort", "condition": "plain", "model": "sonnet", "passed": true, "n_cases": 7, "cases_failed": [], "cost_usd": 0.014716799999999999, "seconds": 8.7, "tool_calls": {"Read": 1, "Edit": 1}, "cases_skipped": [], "run": 0}
+{"task_id": "find_first_in_sorted", "condition": "plain", "model": "sonnet", "passed": false, "n_cases": 7, "cases_failed": [2, 4], "cost_usd": 0.0710492, "seconds": 57.26, "tool_calls": {"Read": 2, "Glob": 1, "Edit": 1}, "cases_skipped": [], "run": 0}

@@ -104,3 +104,15 @@ def test_parse_literals():
     assert parse_term("42", as_object=True).toPython() == 42
     assert parse_term('"Tokyo"', as_object=True).toPython() == "Tokyo"
     assert parse_term("true", as_object=True).toPython() is True
+
+
+def test_closure_cache_reused_and_invalidated(kb: KnowledgeBase):
+    kb.add_triples([("ns:alice", "ns:knows", "ns:bob")])
+    first = kb.closure()
+    assert kb.closure() is first  # cached until the graph changes
+    kb.add_triples([("ns:bob", "ns:knows", "ns:carol")])
+    second = kb.closure()
+    assert second is not first
+    assert (parse_term("ns:bob"), parse_term("ns:knows"), parse_term("ns:carol")) in second
+    kb.remove_triples([("ns:bob", "ns:knows", "ns:carol")])
+    assert kb.closure() is not second
