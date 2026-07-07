@@ -231,14 +231,15 @@ README の「会話や文書から事実をトリプルとして抽出」は、�
 ## 実装スケッチ
 
 ```sh
-nsai kb build-from-code src/          # ✅ 実装済み(src/nsai/code2kb.py)
+nsai kb build-from-code src/          # ✅ 実装済み(src/nsai/code2kb/)
 nsai ingest --jsonl history.jsonl     # ✅ 実装済み(src/nsai/history.py): 会話履歴をターン毎に整形して抽出
 ```
 
 - `ast` visitor で上記述語のトリプルを抽出し、`source="<ファイルパス> (static-analysis)"`
   で provenance を記録。再実行時は差分のみ追加(add_triples が重複除去済み)
 - コード変更後に再実行すれば、古い契約との矛盾が kb_verify で浮上する
-- 対象言語は Python から。多言語対応は tree-sitter 導入時に検討
+- ✅ 多言語対応済み: Python (ast) / C/C++ / TypeScript / Rust (tree-sitter)。
+  C/C++ は `--cpp-backend clang`(libclang, `nsai[clang]` extra)で高精度化できる
 
 ## 留保
 
