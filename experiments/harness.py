@@ -80,7 +80,15 @@ conflicts that only surface through inference.
 End your reply with exactly one line listing every conflicting (subject, predicate) \
 pair, semicolon-separated:
 FINAL: ns:subject|ns:predicate; ns:subject|ns:predicate
+
+If you delegate any of the work, run the subagent synchronously (never in the \
+background — pass run_in_background: false), wait for its results, then state the \
+complete findings and the FINAL line yourself. A reply that only describes the \
+delegation is a failure.
 """
+
+# Bump when any task prompt changes; recorded per record for reproducibility.
+PROMPT_REV = 2
 
 
 def render_prompt(task: dict, task_type: str, condition: str, facts_ttl: str | None) -> str:
@@ -186,6 +194,7 @@ async def run_task(
         "cost_usd": cost,
         "seconds": round(time.monotonic() - start, 2),
         "tool_calls": tool_calls,
+        "prompt_rev": PROMPT_REV,
     }
     if task_type == "claims":
         record["kind"] = task.get("kind")
