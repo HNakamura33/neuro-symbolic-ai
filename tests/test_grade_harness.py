@@ -1,0 +1,97 @@
+from pathlib import Path
+
+import pytest
+
+from experiments.grade import (
+    accuracy,
+    mcnemar_exact,
+    paired_bootstrap,
+    summarize,
+    three_way_metrics,
+)
+from experiments.harness import build_condition_options, parse_final, render_prompt
+from experiments.kbgen import generate
+from nsai.tools import ALLOWED_TOOL_NAMES
+
+
+def _rec(task_id, gold, pred, **extra):
+    return {"task_id": task_id, "task_type": "claims", "condition": "X",
+            "gold": gold, "pred": pred, "correct": gold == pred,
+            "cost_usd": 0.01, "seconds": 1.0, "tool_calls": {}, "run": 0, **extra}
+
+
+def test_three_way_metrics_and_false_verification():
+    records = [
+        _rec("t1", "entailed", "entailed"),
+        _rec("t2", "contradicted", "entailed"),   # hallucinated verification
+        _rec("t3", "unknown", "unknown"),
+        _rec("t4", "unknown", "entailed"),        # hallucinated verification
+    ]
+    m = three_way_metrics(records)
+    assert m["per_label"]["entailed"]["precision"] == pytest.approx(1 / 3)
+    assert m["per_label"]["entailed"]["recall"] == 1.0
+    assert m["false_verification_rate"] == pytest.approx(2 / 3)
+    assert accuracy(records) == 0.5
+
+
+def test_mcnemar_counts_discordant_pairs():
+    a = [_rec("t1", "e", "e"), _rec("t2", "e", "e"), _rec("t3", "e", "x")]
+    b = [_rec("t1", "e", "x"), _rec("t2", "e", "e"), _rec("t3", "e", "e")]
+    m = mcnemar_exact(a, b)
+    assert (m["b"], m["c"]) == (1, 1)
+    assert m["p_value"] == 1.0
+    identical = mcnemar_exact(a, a)
+    assert identical["p_value"] == 1.0 and identical["b"] == identical["c"] == 0
+
+
+def test_paired_bootstrap_detects_a_clear_difference():
+    a = [1.0] * 30
+    b = [0.0] * 30
+    r = paired_bootstrap(a, b, n_resamples=2000, seed=0)
+    assert r["mean_diff"] == 1.0
+    assert r["ci95"][0] > 0.9
+    same = paired_bootstrap(a, a, n_resamples=2000, seed=0)
+    assert same["mean_diff"] == 0.0
+
+
+def test_summarize_reports_hops_breakdown():
+    records = [
+        {**_rec("q1", "ns:a", "ns:a"), "task_type": "qa", "hops": 2},
+        {**_rec("q2", "ns:b", "ns:x"), "task_type": "qa", "hops": 4},
+    ]
+    s = summarize(records)
+    assert s["accuracy_by_hops"] == {2: 1.0, 4: 0.0}
+
+
+def test_parse_final():
+    assert parse_final("thinking...\nFINAL: entailed") == "entailed"
+    assert parse_final("FINAL: ns:tokyo\nwait no\nFINAL: ns:osaka.") == "ns:osaka"
+    assert parse_final("no answer line") is None
+
+
+def test_render_prompt_embeds_facts_only_for_b1():
+    task = {"id": "claim-0", "subject": "ns:a", "predicate": "ns:p", "object": "ns:b",
+            "label": "entailed", "kind": "explicit"}
+    ttl = "@prefix ns: <http://nsai.local/ns#> ."
+    b1 = render_prompt(task, "claims", "B1", ttl)
+    assert "KNOWLEDGE BASE" in b1 and "@prefix" in b1
+    for cond in ("B0", "C1", "C2"):
+        assert "@prefix" not in render_prompt(task, "claims", cond, ttl)
+    assert "symbolic tools" in render_prompt(task, "claims", "C2", None)
+
+
+def test_condition_options(tmp_path: Path):
+    ds = generate(size=100, seed=0, claims_per_label=2, qa_per_hop=2, hops=(2,))
+    ds.save(tmp_path)
+    kb_path = tmp_path / "kb.ttl"
+
+    b0 = build_condition_options(kb_path, "B0", None)
+    assert b0.allowed_tools == [] and not b0.mcp_servers
+
+    c1 = build_condition_options(kb_path, "C1", None)
+    assert c1.allowed_tools == ALLOWED_TOOL_NAMES
+    assert not c1.agents
+
+    c2 = build_condition_options(kb_path, "C2", None)
+    assert "Task" in c2.allowed_tools
+    assert c2.agents

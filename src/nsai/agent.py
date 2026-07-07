@@ -57,9 +57,13 @@ def build_options(
     coding: bool = False,
     full_auto: bool = False,
     bypass: bool = False,
+    subagents: bool = True,
 ) -> ClaudeAgentOptions:
     server = build_server(kb)
-    agents = build_agents(coding=coding)
+    # subagents=False is the experiment ablation (condition C1 in
+    # docs/experiment-plan.md): same symbolic tools, no Task delegation.
+    agents = build_agents(coding=coding) if subagents else None
+    task_tool = ["Task"] if subagents else []
     if (full_auto or bypass) and not coding:
         raise ValueError("full_auto/bypass are only meaningful in coding mode")
     if coding:
@@ -83,7 +87,7 @@ def build_options(
                 system_prompt=CODE_SYSTEM_PROMPT,
                 model=model,
                 mcp_servers={"symbolic": server},
-                allowed_tools=ALLOWED_TOOL_NAMES + CODING_TOOLS + ["Task", "Bash"],
+                allowed_tools=ALLOWED_TOOL_NAMES + CODING_TOOLS + task_tool + ["Bash"],
                 agents=agents,
                 permission_mode="dontAsk",
                 setting_sources=[],
@@ -95,7 +99,7 @@ def build_options(
             system_prompt=CODE_SYSTEM_PROMPT,
             model=model,
             mcp_servers={"symbolic": server},
-            allowed_tools=ALLOWED_TOOL_NAMES + CODING_TOOLS + ["Task"],
+            allowed_tools=ALLOWED_TOOL_NAMES + CODING_TOOLS + task_tool,
             agents=agents,
             can_use_tool=_confirm_tool,
             setting_sources=[],
@@ -106,7 +110,7 @@ def build_options(
         mcp_servers={"symbolic": server},
         # Task enables delegation to the subagents below; each subagent is
         # itself restricted to read-only symbolic tools by its definition.
-        allowed_tools=ALLOWED_TOOL_NAMES + ["Task"],
+        allowed_tools=ALLOWED_TOOL_NAMES + task_tool,
         agents=agents,
         # Deny everything not in allowed_tools: the agent gets ONLY the
         # symbolic tools — no file system, no bash, no network.

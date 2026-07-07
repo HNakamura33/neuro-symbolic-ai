@@ -290,17 +290,26 @@ min/max・clamp・範囲チェックの修正、日付/インデックス演算 
 
 `experiments/` ディレクトリを新設(パッケージ本体には手を入れない):
 
-| モジュール | 内容 | 規模感 |
+| モジュール | 内容 | 状態 |
 |---|---|---|
-| `kbgen.py` | 合成 KB 生成器(ドメインスキーマ、functional/sameAs/subClassOf 注入、QA ペア・矛盾・検証主張の同時生成、シード固定) | 中 |
-| `benchloader.py` | 公開ベンチマークの取得と変換: MetaQA KB → Turtle、ProofWriter ルール → RDFS 写像(+除外率記録)、CLUTRR/2Wiki/FEVER の整形、エンティティ置換摂動版の生成 | 中 |
-| `harness.py` | 条件(B0/B1/C1/C2)×タスクの実行器。`build_options` を実験フラグ付きで呼び、構造化回答を抽出、JSONL に全測定項目を記録 | 中 |
-| `grade.py` | 採点(EM、3値判定、P/R/F1)と統計検定(McNemar、paired bootstrap) | 小 |
-| `bugsuite/` | 実験4のバグ植え込み関数+隠しテスト | 中(データ作成が主) |
-| `report.py` | 集計表・図(劣化曲線、パレート図)の生成 | 小 |
+| `kbgen.py` | 合成 KB 生成器(ドメインスキーマ、functional/sameAs/subClassOf 注入、QA ペア・矛盾・検証主張の同時生成、シード固定)。**全 gold ラベルを生成時に OWL-RL 閉包で検証**するため、データセットが kb_verify と食い違うことは構造的にない | ✅ 実装済み |
+| `harness.py` | 条件(B0/B1/C1/C2)×タスクの実行器。タスクごとに新セッション+KB のスクラッチコピーで汚染を防止。`FINAL:` 行の構造化抽出、JSONL に全測定項目(正誤・コスト・ツールコール数・時間)を記録 | ✅ 実装済み |
+| `grade.py` | 採点(EM、3値判定 P/R/F1、偽検証率)と統計検定(McNemar 正確検定、paired bootstrap) | ✅ 実装済み |
+| `report.py` | 結果 JSONL → markdown 比較表(条件別サマリ、ホップ数別精度、McNemar) | ✅ 実装済み |
+| `benchloader.py` | 公開ベンチマークの取得と変換: MetaQA KB → Turtle、ProofWriter ルール → RDFS 写像(+除外率記録)、CLUTRR/2Wiki/FEVER の整形、エンティティ置換摂動版の生成 | 未(週2) |
+| `bugsuite/` | 実験4のバグ植え込み関数+隠しテスト | 未(週3) |
 
-先行して必要な本体側の小改修: `build_options` に「サブエージェント無効化」フラグ
-(C1 用、数行)。Bash 自動許可は `--full-auto` として実装済み。
+本体側の小改修も完了: `build_options(subagents=False)` が C1 条件
+(記号ツールあり・委譲なし)、Bash 自動許可は `--full-auto` / `--bypass-permissions`。
+
+実行例(週1パイロット):
+
+```sh
+uv run python -m experiments.kbgen --out data/dev --size 500 --seed 42 --inject 20
+uv run python -m experiments.harness --dataset data/dev --task-type claims \
+    --condition C1 --model haiku --runs 1 --limit 10 --out results/pilot-c1.jsonl
+uv run python -m experiments.report results/pilot-*.jsonl --compare B1 C1
+```
 
 ## スケジュール
 

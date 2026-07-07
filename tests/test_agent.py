@@ -44,6 +44,15 @@ def test_full_auto_requires_coding_mode(kb: KnowledgeBase):
         build_options(kb, full_auto=True)
 
 
+def test_subagents_off_is_the_c1_ablation(kb: KnowledgeBase):
+    opts = build_options(kb, subagents=False)
+    assert opts.allowed_tools == ALLOWED_TOOL_NAMES
+    assert not opts.agents
+    coding = build_options(kb, coding=True, subagents=False)
+    assert "Task" not in coding.allowed_tools
+    assert not coding.agents
+
+
 def test_bypass_drops_allowlist_entirely(kb: KnowledgeBase):
     opts = build_options(kb, coding=True, bypass=True)
     assert opts.permission_mode == "bypassPermissions"

@@ -185,8 +185,10 @@ KB ファイルは既定で `./kb.ttl`(`--kb` オプション or `NSAI_KB` 環�
 ## 開発
 
 ```sh
-uv run pytest        # テスト(45件)
+uv run pytest        # テスト(58件)
 ```
+
+`experiments/` には論文用の実験基盤([実験計画](docs/experiment-plan.md))がある: 合成 KB 生成(`kbgen`)、条件別実行ハーネス(`harness`)、採点・統計(`grade`)、レポート生成(`report`)。
 
 ## 設計ドキュメント
 
