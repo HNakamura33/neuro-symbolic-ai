@@ -22,6 +22,7 @@ from rich.console import Console
 
 from .kb import KnowledgeBase
 from .prompts import CODE_SYSTEM_PROMPT, SYSTEM_PROMPT
+from .subagents import build_agents
 from .tools import ALLOWED_TOOL_NAMES, build_server
 
 console = Console()
@@ -54,14 +55,17 @@ def build_options(
     kb: KnowledgeBase, model: str | None = None, coding: bool = False
 ) -> ClaudeAgentOptions:
     server = build_server(kb)
+    agents = build_agents(coding=coding)
     if coding:
         # Hybrid mode: file tools + symbolic solvers. Bash is gated behind a
-        # per-command user confirmation; anything else is denied.
+        # per-command user confirmation (also when a subagent runs it);
+        # anything else is denied.
         return ClaudeAgentOptions(
             system_prompt=CODE_SYSTEM_PROMPT,
             model=model,
             mcp_servers={"symbolic": server},
-            allowed_tools=ALLOWED_TOOL_NAMES + CODING_TOOLS,
+            allowed_tools=ALLOWED_TOOL_NAMES + CODING_TOOLS + ["Task"],
+            agents=agents,
             can_use_tool=_confirm_tool,
             setting_sources=[],
         )
@@ -69,7 +73,10 @@ def build_options(
         system_prompt=SYSTEM_PROMPT,
         model=model,
         mcp_servers={"symbolic": server},
-        allowed_tools=ALLOWED_TOOL_NAMES,
+        # Task enables delegation to the subagents below; each subagent is
+        # itself restricted to read-only symbolic tools by its definition.
+        allowed_tools=ALLOWED_TOOL_NAMES + ["Task"],
+        agents=agents,
         # Deny everything not in allowed_tools: the agent gets ONLY the
         # symbolic tools — no file system, no bash, no network.
         permission_mode="dontAsk",

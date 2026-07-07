@@ -12,6 +12,8 @@ LLM は自然言語の理解と定式化だけを担い、**事実の保存・�
 - **プランニング** — 制約充足問題を定式化してソルバーで厳密解を列挙
 - **数理検証** — Z3 で数値・論理の主張を証明、または反例を生成
 - **ハイブリッドコーディング** — 通常のコーディング(ファイル操作)にシンボリック検証を組み合わせ、境界条件・入力検証を Z3 で証明/反証
+- **サブエージェント委譲** — ツールコールの嵩む探索・監査を専門サブエージェント(symbolic-explorer / kb-auditor / prover、コーディングモードでは加えて test-generator / loop-judge)に委譲し、蒸留された結論だけをメインの文脈に戻す
+- **静的解析 KB 構築(code2kb)** — `ast` で import・呼び出し・継承などの構造的事実を決定論的に抽出(LLM 不要)。JSONL 会話履歴の取り込み(`ingest --jsonl`)にも対応
 
 ## アーキテクチャ
 
@@ -77,6 +79,7 @@ uv run nsai chat                          # 対話モード(マルチターン)
 uv run nsai ask "ソクラテスは死ぬ?"         # ワンショット質問
 uv run nsai verify "アリスは東京生まれ"      # 主張の検証
 uv run nsai ingest document.txt           # 文書から KB 構築
+uv run nsai ingest --jsonl history.jsonl  # JSONL 会話履歴をターン整形して KB 構築
 uv run nsai ask -m haiku "..."            # モデル指定(コスト節約)
 ```
 
@@ -155,18 +158,32 @@ KB ファイルは既定で `./kb.ttl`(`--kb` オプション or `NSAI_KB` 環�
 | `csp_solve` | 有限領域の制約充足(スケジューリング等) |
 | `smt_verify` | Z3 で数値・論理主張を証明 / 反証 |
 
-セキュリティ: 通常モードでは `permission_mode="dontAsk"` + `allowed_tools` により、エージェントは上記9ツール**のみ**使用可能(ファイルシステム・bash・ネットワークは遮断)。`nsai code` のみファイルツールを追加で許可し、bash は都度確認。
+セキュリティ: 通常モードでは `permission_mode="dontAsk"` + `allowed_tools` により、エージェントは上記9ツールと `Task`(サブエージェント委譲)**のみ**使用可能(ファイルシステム・bash・ネットワークは遮断)。`nsai code` のみファイルツールを追加で許可し、bash は都度確認。
+
+## サブエージェント(Task 委譲)
+
+メインエージェント(強いモデル: 理解・設計・統合)は、ツールコールの多い探索・監査を `Task` ツールで専門サブエージェントに委譲できる(`src/nsai/subagents.py`)。各サブエージェントは定義されたツールしか持たず、試行錯誤は自身のコンテキスト内に閉じる。
+
+| サブエージェント | モデル | ツール | 役割 |
+|---|---|---|---|
+| `symbolic-explorer` | haiku | kb_*(読み取り専用) | 知識グラフのマルチホップ探索 — 影響分析・根本原因分析・マルチホップ QA。全トリプル検証済みのパスを返す |
+| `kb-auditor` | haiku | kb_*(読み取り専用)+ provenance | KB 全体の矛盾走査(FunctionalProperty 衝突、sameAs/differentFrom)。どの情報源同士が食い違うかまで報告 |
+| `prover` | 継承 | smt_verify, kb_find/sparql | 大きな主張を補題に分解し、SMT で積み上げ証明 |
+| `test-generator`※ | 継承 | smt_verify, csp_solve, Read | 反例・境界値・同値クラス代表値から pytest テストを系統的に生成 |
+| `loop-judge`※ | 継承 | kb_*, smt_verify, Bash† | ループ終了条件を機械判定可能な述語の合取として KB に記録し、毎イテレーション決定論的に DONE / CONTINUE / STALLED を判定 |
+
+※ コーディングモード(`nsai code`)限定 / † Bash は従来どおりコマンドごとに y/N 確認。
 
 ## 開発
 
 ```sh
-uv run pytest        # テスト(26件)
+uv run pytest        # テスト(41件)
 ```
 
-## ロードマップ
+## 設計ドキュメント
 
-- [サブエージェントへの決定論的推論の委譲](docs/future-extensions.md) — symbolic-explorer(知識グラフの agentic search)/ kb-auditor(矛盾の系統的走査)/ test-generator(反例・境界値からのテスト生成)/ loop-judge(ループ終了条件の形式化と判定)
-- [静的解析による KB 構築(code2kb)](docs/future-extensions.md#拡張2-静的解析による-kb-構築code2kb) — `ast` による決定論的な構造抽出(import/呼び出し/継承)+ LLM による意味層(契約・意図)の分業
+- [サブエージェントへの決定論的推論の委譲](docs/future-extensions.md)(実装済み)— symbolic-explorer(知識グラフの agentic search)/ kb-auditor(矛盾の系統的走査)/ prover(補題分解証明)/ test-generator(反例・境界値からのテスト生成)/ loop-judge(ループ終了条件の形式化と判定)
+- [静的解析による KB 構築(code2kb)](docs/future-extensions.md#拡張2-静的解析による-kb-構築code2kb)(実装済み)— `ast` による決定論的な構造抽出(import/呼び出し/継承)+ LLM による意味層(契約・意図)の分業、JSONL 会話履歴の取り込み
 
 ## 矛盾検出のモデリングのコツ
 

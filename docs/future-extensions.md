@@ -1,6 +1,6 @@
 # 将来の拡張
 
-ステータス: 拡張1は構想(未実装)、拡張2の `kb build-from-code` は実装済み / 起案: 2026-07-07
+ステータス: 拡張1・拡張2ともに実装済み / 起案: 2026-07-07 / 実装完了: 2026-07-07
 
 - [拡張1: サブエージェントへの決定論的推論の委譲](#拡張1-サブエージェントへの決定論的推論の委譲)
 - [拡張2: 静的解析による KB 構築(code2kb)](#拡張2-静的解析による-kb-構築code2kb)
@@ -8,6 +8,12 @@
 ---
 
 # 拡張1: サブエージェントへの決定論的推論の委譲
+
+> ✅ **実装済み** — `src/nsai/subagents.py` に5体すべて(symbolic-explorer /
+> kb-auditor / prover / test-generator / loop-judge)を定義。`agent.py` の
+> `build_options` が `agents=` と `Task` ツールを配線する。test-generator と
+> loop-judge はファイル/Bash ツールを要するためコーディングモード限定。
+> Bash は従来どおりコマンドごとの y/N 確認を通る。
 
 ## 概要
 
@@ -194,7 +200,7 @@ README の「会話や文書から事実をトリプルとして抽出」は、�
 |---|---|---|
 | 会話 | ✅ 対応 | chat/code セッション中にユーザーが述べた事実を LLM が抽出(extract-then-store) |
 | ドキュメント(設計書等) | ✅ 対応 | `nsai ingest <file>` — 任意のテキストを LLM が読んで抽出 |
-| JSONL 会話履歴 | ⚠️ 未対応 | テキストとして ingest に渡せば動くが、ターン構造を認識した整形はない |
+| JSONL 会話履歴 | ✅ 対応 | `nsai ingest --jsonl` — ターンを認識・採番して整形し、ツールノイズを除去してから抽出(`src/nsai/history.py`) |
 | ソースコード | ⚠️ 部分的 | テキストとして ingest すれば意図レベルの事実は抽出されるが、構造的事実の**網羅は保証されない**(LLM 抽出は確率的) |
 
 ## 提案: 静的解析との分業
@@ -226,7 +232,7 @@ README の「会話や文書から事実をトリプルとして抽出」は、�
 
 ```sh
 nsai kb build-from-code src/          # ✅ 実装済み(src/nsai/code2kb.py)
-nsai ingest --jsonl history.jsonl     # 未実装: 会話履歴をターン毎に整形して抽出
+nsai ingest --jsonl history.jsonl     # ✅ 実装済み(src/nsai/history.py): 会話履歴をターン毎に整形して抽出
 ```
 
 - `ast` visitor で上記述語のトリプルを抽出し、`source="<ファイルパス> (static-analysis)"`

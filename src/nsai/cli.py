@@ -88,20 +88,46 @@ def code(
 @app.command()
 def ingest(
     file: Path = typer.Argument(..., exists=True, readable=True, help="Text file to ingest"),
+    jsonl: bool = typer.Option(
+        False,
+        "--jsonl",
+        help="Treat FILE as JSONL conversation history: turns are recognized "
+        "and numbered before extraction, tool noise is dropped.",
+    ),
     kb: Optional[Path] = KBPathOption,
     model: Optional[str] = ModelOption,
 ):
-    """Extract facts from a text file into the KB."""
+    """Extract facts from a text file (or JSONL conversation history) into the KB."""
     from .agent import run_once
 
-    text = file.read_text(encoding="utf-8")
-    prompt = (
-        "Extract all factual statements from the following document and store them "
-        "in the knowledge graph with kb_add_triples (include schema triples like "
-        "rdfs:subClassOf and owl:FunctionalProperty where implied). "
-        "Then report how many triples you added and list them.\n\n"
-        f"--- DOCUMENT ({file.name}) ---\n{text}"
-    )
+    raw = file.read_text(encoding="utf-8")
+    if jsonl:
+        from .history import format_history
+
+        try:
+            text = format_history(raw)
+        except ValueError as e:
+            console.print(f"[red]{e}[/red]")
+            raise typer.Exit(code=1)
+        prompt = (
+            "The following is a conversation history, one numbered block per turn. "
+            "Extract all durable factual statements into the knowledge graph with "
+            "kb_add_triples (include schema triples like rdfs:subClassOf and "
+            "owl:FunctionalProperty where implied). Skip greetings, questions, and "
+            "retracted statements; prefer the latest version when a fact is corrected "
+            "in a later turn. Set source to "
+            f"'{file.name}#turn-N' using each fact's turn number. "
+            "Then report how many triples you added and list them.\n\n"
+            f"--- CONVERSATION ({file.name}) ---\n{text}"
+        )
+    else:
+        prompt = (
+            "Extract all factual statements from the following document and store them "
+            "in the knowledge graph with kb_add_triples (include schema triples like "
+            "rdfs:subClassOf and owl:FunctionalProperty where implied). "
+            "Then report how many triples you added and list them.\n\n"
+            f"--- DOCUMENT ({file.name}) ---\n{raw}"
+        )
     asyncio.run(run_once(_kb_path(kb), prompt, model))
 
 
