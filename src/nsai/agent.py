@@ -2,27 +2,69 @@
 
 from __future__ import annotations
 
+import asyncio
+import warnings
 from pathlib import Path
+from typing import Any
 
 from claude_agent_sdk import (
     AssistantMessage,
     ClaudeAgentOptions,
     ClaudeSDKClient,
+    PermissionResultAllow,
+    PermissionResultDeny,
     ResultMessage,
     TextBlock,
     ToolUseBlock,
 )
+from claude_agent_sdk.types import CanUseToolShadowedWarning, ToolPermissionContext
 from rich.console import Console
 
 from .kb import KnowledgeBase
-from .prompts import SYSTEM_PROMPT
+from .prompts import CODE_SYSTEM_PROMPT, SYSTEM_PROMPT
 from .tools import ALLOWED_TOOL_NAMES, build_server
 
 console = Console()
 
+# File tools auto-allowed in coding mode. Bash is deliberately absent: it falls
+# through to _confirm_tool so every command is confirmed by the user.
+CODING_TOOLS = ["Read", "Glob", "Grep", "Edit", "Write", "TodoWrite"]
 
-def build_options(kb: KnowledgeBase, model: str | None = None) -> ClaudeAgentOptions:
+# allowed_tools intentionally shadows the callback for the whole-tool entries
+# above; the callback only gates what falls through (Bash and everything else).
+warnings.filterwarnings("ignore", category=CanUseToolShadowedWarning)
+
+
+async def _confirm_tool(
+    tool_name: str, tool_input: dict[str, Any], context: ToolPermissionContext
+) -> PermissionResultAllow | PermissionResultDeny:
+    if tool_name != "Bash":
+        return PermissionResultDeny(
+            message=f"{tool_name} is not available in this session."
+        )
+    command = tool_input.get("command", "")
+    console.print(f"[yellow]bash?[/yellow] [bold]{command}[/bold]")
+    answer = await asyncio.to_thread(input, "  run this command? [y/N] ")
+    if answer.strip().lower() in ("y", "yes"):
+        return PermissionResultAllow()
+    return PermissionResultDeny(message="User declined to run this command.")
+
+
+def build_options(
+    kb: KnowledgeBase, model: str | None = None, coding: bool = False
+) -> ClaudeAgentOptions:
     server = build_server(kb)
+    if coding:
+        # Hybrid mode: file tools + symbolic solvers. Bash is gated behind a
+        # per-command user confirmation; anything else is denied.
+        return ClaudeAgentOptions(
+            system_prompt=CODE_SYSTEM_PROMPT,
+            model=model,
+            mcp_servers={"symbolic": server},
+            allowed_tools=ALLOWED_TOOL_NAMES + CODING_TOOLS,
+            can_use_tool=_confirm_tool,
+            setting_sources=[],
+        )
     return ClaudeAgentOptions(
         system_prompt=SYSTEM_PROMPT,
         model=model,
@@ -51,23 +93,28 @@ async def _render_response(client: ClaudeSDKClient, show_cost: bool = False) -> 
                 console.print(f"[dim]cost: ${message.total_cost_usd:.4f}[/dim]")
 
 
-async def run_once(kb_path: Path, prompt: str, model: str | None = None) -> None:
+async def run_once(
+    kb_path: Path, prompt: str, model: str | None = None, coding: bool = False
+) -> None:
     """One-shot: send a single prompt and print the response."""
     kb = KnowledgeBase(kb_path)
-    options = build_options(kb, model)
+    options = build_options(kb, model, coding=coding)
     async with ClaudeSDKClient(options=options) as client:
         await client.query(prompt)
         await _render_response(client, show_cost=True)
 
 
-async def run_chat(kb_path: Path, model: str | None = None) -> None:
+async def run_chat(
+    kb_path: Path, model: str | None = None, coding: bool = False
+) -> None:
     """Interactive multi-turn REPL sharing one session."""
     kb = KnowledgeBase(kb_path)
-    options = build_options(kb, model)
+    options = build_options(kb, model, coding=coding)
 
     stats = kb.stats()
+    mode = "coding (hybrid)" if coding else "neuro-symbolic agent"
     console.print(
-        f"[bold]nsai[/bold] — neuro-symbolic agent  "
+        f"[bold]nsai[/bold] — {mode}  "
         f"[dim](KB: {kb_path}, {stats['triples']} triples — /exit to quit)[/dim]"
     )
 
