@@ -229,3 +229,18 @@ def test_c2f_forces_delegation_prompt_and_subagents(tmp_path: Path):
     kb.write_text("@prefix ns: <http://nsai.local/ns#> .\n", encoding="utf-8")
     options = build_condition_options(kb, "C2f", None)
     assert options.agents and "Task" in options.allowed_tools
+
+
+def test_b2_agentic_grep_condition(tmp_path: Path):
+    task = {"id": "qa-0", "question": "who?", "start": "ns:a",
+            "answer": "ns:d", "hops": 2}
+    prompt = render_prompt(task, "qa", "B2", None)
+    assert "kb.ttl" in prompt and "Grep" in prompt
+    assert "@prefix" not in prompt          # facts are never inlined for B2
+    kb = tmp_path / "kb.ttl"
+    kb.write_text("@prefix ns: <http://nsai.local/ns#> .\n", encoding="utf-8")
+    options = build_condition_options(kb, "B2", None)
+    assert sorted(options.tools) == ["Glob", "Grep", "Read"]
+    assert options.cwd == str(tmp_path)     # pinned to the scratch dir
+    assert not options.mcp_servers          # no symbolic layer
+    assert options.agents is None           # no subagents

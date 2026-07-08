@@ -11,6 +11,11 @@ Conditions (docs/experiment-plan.md):
        large to inline whole (MetaQA); qa task type only. Each record
        carries b1p_gold_in_context so EM failures decompose into
        "context could not contain the facts" vs "model missed them".
+- B2   agentic-grep: the same agent loop with Grep/Read over the raw
+       kb.ttl in its working directory — no symbolic tools. Separates the
+       contribution of AGENCY (iterative tool use, which C1 also has) from
+       the contribution of the SYMBOLIC layer: B1p→B2 isolates agency,
+       B2→C1 isolates symbolic grounding.
 - C1   nsai symbolic tools, no subagents   (symbolic-layer ablation)
 - C2   nsai full (subagents + Task)
 - C2f  C2 with delegation FORCED by the prompt (plan §リスク "委譲不履行"):
@@ -50,11 +55,23 @@ from claude_agent_sdk import (
 from nsai.agent import build_options
 from nsai.kb import KnowledgeBase
 
-CONDITIONS = ("B0", "B1", "B1p", "C1", "C2", "C2f")
+CONDITIONS = ("B0", "B1", "B1p", "B2", "C1", "C2", "C2f")
 
 BASELINE_SYSTEM = (
     "You are a careful reasoner. Follow the task instructions exactly. "
     "Think step by step, then end your reply with the required FINAL line."
+)
+
+# B2: a Claude-Code-style searcher — same agent loop as C1/C2 but its only
+# access to the KB is text search over the raw Turtle file.
+AGENTIC_GREP_SYSTEM = (
+    "You are a careful reasoner with file-search tools. The knowledge base "
+    "is a Turtle file (kb.ttl) in your working directory; one triple per "
+    "statement, entities and predicates use the ns: prefix. Answer questions "
+    "by searching it with Grep and reading matching regions with Read — "
+    "chain searches for multi-hop questions, and check both edge directions "
+    "(the entity may appear as subject or object). Follow the task "
+    "instructions exactly and end with the required FINAL line."
 )
 
 _FINAL_RE = re.compile(r"FINAL:\s*([^\s`*]+)")
@@ -122,6 +139,11 @@ def render_prompt(task: dict, task_type: str, condition: str, facts_ttl: str | N
             " provided below (facts retrieved around the question entity; "
             "answer only from these facts)"
         )
+    elif condition == "B2":
+        source_hint = (
+            " stored as Turtle in kb.ttl in your working directory — search "
+            "it with Grep and Read (entities look like ns:Some_Name)"
+        )
     else:
         source_hint = " via your symbolic tools (kb_verify, kb_sparql, kb_find)"
     if task_type == "claims":
@@ -163,6 +185,18 @@ def build_condition_options(
             # could still read the dataset KB off disk via Bash.
             tools=[],
             allowed_tools=[],
+            permission_mode="dontAsk",
+            setting_sources=[],
+        )
+    if condition == "B2":
+        return ClaudeAgentOptions(
+            system_prompt=AGENTIC_GREP_SYSTEM,
+            model=model,
+            # Read-only text search over the scratch KB copy; cwd pins the
+            # agent to the tempdir so only kb.ttl (+ prov sidecar) is visible.
+            tools=["Grep", "Read", "Glob"],
+            allowed_tools=["Grep", "Read", "Glob"],
+            cwd=str(kb_path.parent),
             permission_mode="dontAsk",
             setting_sources=[],
         )
