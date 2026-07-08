@@ -214,3 +214,18 @@ def test_b1p_condition_options_are_toolless(tmp_path: Path):
     options = build_condition_options(kb, "B1p", None)
     assert options.tools == [] and options.allowed_tools == []
     assert not options.mcp_servers
+
+
+def test_c2f_forces_delegation_prompt_and_subagents(tmp_path: Path):
+    task = {"id": "qa-0", "question": "who?", "start": "ns:a",
+            "answer": "ns:d", "hops": 2}
+    prompt = render_prompt(task, "qa", "C2f", None)
+    assert "symbolic-explorer" in prompt
+    assert "run_in_background: false" in prompt
+    # C2 (unforced) must NOT carry the mandate — that's the ablation.
+    assert "symbolic-explorer" not in render_prompt(task, "qa", "C2", None)
+    # Options: C2f gets subagents exactly like C2.
+    kb = tmp_path / "kb.ttl"
+    kb.write_text("@prefix ns: <http://nsai.local/ns#> .\n", encoding="utf-8")
+    options = build_condition_options(kb, "C2f", None)
+    assert options.agents and "Task" in options.allowed_tools

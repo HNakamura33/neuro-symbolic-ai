@@ -13,6 +13,10 @@ Conditions (docs/experiment-plan.md):
        "context could not contain the facts" vs "model missed them".
 - C1   nsai symbolic tools, no subagents   (symbolic-layer ablation)
 - C2   nsai full (subagents + Task)
+- C2f  C2 with delegation FORCED by the prompt (plan §リスク "委譲不履行"):
+       measured C2 delegation was 0/600 on MetaQA, so the C2−C1 gap says
+       nothing about delegation; C2f separates the delegation ceiling from
+       the main agent's willingness to delegate. qa task type only.
 
 Each task runs in a fresh session against a scratch copy of the dataset KB
 (agents may assert triples; the pristine KB must survive across tasks).
@@ -46,7 +50,7 @@ from claude_agent_sdk import (
 from nsai.agent import build_options
 from nsai.kb import KnowledgeBase
 
-CONDITIONS = ("B0", "B1", "B1p", "C1", "C2")
+CONDITIONS = ("B0", "B1", "B1p", "C1", "C2", "C2f")
 
 BASELINE_SYSTEM = (
     "You are a careful reasoner. Follow the task instructions exactly. "
@@ -76,6 +80,16 @@ Answer the question using the knowledge base{source_hint}.
 Question: {question}
 
 Reply with the entity CURIE only, ending with the line: FINAL: ns:<name>
+"""
+
+# C2f: the delegation mandate appended to QA_TASK. Mirrors the audit
+# prompt's synchronous-delegation contract (prompt_rev 2).
+QA_DELEGATE = """\
+
+You MUST delegate the graph exploration to the symbolic-explorer subagent \
+(Task tool). Run it synchronously (run_in_background: false), wait for the \
+verified path it reports, then state the answer and the FINAL line yourself. \
+Answering without having invoked symbolic-explorer is a failure.
 """
 
 AUDIT_TASK = """\
@@ -114,6 +128,8 @@ def render_prompt(task: dict, task_type: str, condition: str, facts_ttl: str | N
         body = CLAIM_TASK.format(source_hint=source_hint, **task)
     elif task_type == "qa":
         body = QA_TASK.format(source_hint=source_hint, question=task["question"])
+        if condition == "C2f":
+            body += QA_DELEGATE
     else:
         body = AUDIT_TASK.format(source_hint=source_hint)
     if condition in ("B1", "B1p") and facts_ttl:
@@ -151,7 +167,7 @@ def build_condition_options(
             setting_sources=[],
         )
     kb = KnowledgeBase(kb_path)
-    return build_options(kb, model, subagents=(condition == "C2"))
+    return build_options(kb, model, subagents=(condition in ("C2", "C2f")))
 
 
 # ---------------------------------------------------------------------------
@@ -373,6 +389,8 @@ def main() -> None:
         ap.error("audit requires a KB; B0 has none (use B1/C1/C2)")
     if args.condition == "B1p" and args.task_type != "qa":
         ap.error("B1p requires --task-type qa (needs a start entity)")
+    if args.condition == "C2f" and args.task_type != "qa":
+        ap.error("C2f (forced delegation) is defined for --task-type qa only")
     asyncio.run(
         run_dataset(args.dataset, args.task_type, args.condition, args.model,
                     args.runs, args.limit, args.out,
