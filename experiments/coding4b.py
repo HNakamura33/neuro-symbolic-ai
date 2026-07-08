@@ -180,11 +180,19 @@ def load_evalplus(dataset: str, cache_dir: Path) -> list[dict]:
 
 
 def load_dir(root: Path) -> list[dict]:
-    """bugsuite-like layout: <root>/<task>/correct.py + meta.json."""
+    """bugsuite-like layout: <root>/<task>/correct.py + meta.json.
+
+    Infeasible variants (contradictory spec, hence no correct.py) belong to
+    experiment 4c only — mutation grading needs a correct implementation to
+    mutate, so they are skipped here.
+    """
     tasks = []
     for meta_path in sorted(root.glob("*/meta.json")):
+        correct_path = meta_path.parent / "correct.py"
+        if not correct_path.exists():
+            continue
         meta = json.loads(meta_path.read_text(encoding="utf-8"))
-        source = (meta_path.parent / "correct.py").read_text(encoding="utf-8")
+        source = correct_path.read_text(encoding="utf-8")
         entry_point = meta["entry_point"]
         tasks.append({
             "task_id": meta.get("task_id", meta_path.parent.name),

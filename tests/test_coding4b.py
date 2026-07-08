@@ -429,3 +429,25 @@ def test_module_import_does_not_load_sdk() -> None:
     proc = subprocess.run([sys.executable, "-c", code], env=env,
                           cwd=REPO_ROOT, capture_output=True, text=True)
     assert proc.returncode == 0, proc.stderr
+
+
+def test_load_dir_skips_infeasible_variants(tmp_path: Path) -> None:
+    # Infeasible bugsuite variants ship no correct.py (contradictory spec);
+    # 4b grading mutates the correct implementation, so they must be skipped.
+    feasible = tmp_path / "pager"
+    feasible.mkdir()
+    (feasible / "correct.py").write_text(
+        "def pages(n):\n    if n <= 0:\n        return 0\n    return n\n",
+        encoding="utf-8",
+    )
+    (feasible / "meta.json").write_text(
+        json.dumps({"entry_point": "pages"}), encoding="utf-8"
+    )
+    infeasible = tmp_path / "infeasible-pager"
+    infeasible.mkdir()
+    (infeasible / "buggy.py").write_text("def pages(n):\n    return n\n", encoding="utf-8")
+    (infeasible / "meta.json").write_text(
+        json.dumps({"entry_point": "pages", "feasible": False}), encoding="utf-8"
+    )
+
+    assert [t["task_id"] for t in load_dir(tmp_path)] == ["pager"]
