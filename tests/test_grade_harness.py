@@ -244,3 +244,16 @@ def test_b2_agentic_grep_condition(tmp_path: Path):
     assert options.cwd == str(tmp_path)     # pinned to the scratch dir
     assert not options.mcp_servers          # no symbolic layer
     assert options.agents is None           # no subagents
+
+
+def test_all_condition_options_raise_stream_buffer(tmp_path: Path):
+    # A broad Grep over the 4.3MB MetaQA Turtle file produced a >1MiB tool
+    # result and killed a B2 run at the SDK's default buffer; every
+    # condition streams tool results, so all get the raised limit.
+    from experiments.harness import MAX_BUFFER_SIZE
+
+    kb = tmp_path / "kb.ttl"
+    kb.write_text("@prefix ns: <http://nsai.local/ns#> .\n", encoding="utf-8")
+    for cond in ("B0", "B2", "C1", "C2"):
+        options = build_condition_options(kb, cond, None)
+        assert options.max_buffer_size == MAX_BUFFER_SIZE, cond

@@ -70,9 +70,16 @@ AGENTIC_GREP_SYSTEM = (
     "statement, entities and predicates use the ns: prefix. Answer questions "
     "by searching it with Grep and reading matching regions with Read — "
     "chain searches for multi-hop questions, and check both edge directions "
-    "(the entity may appear as subject or object). Follow the task "
-    "instructions exactly and end with the required FINAL line."
+    "(the entity may appear as subject or object). Keep patterns specific "
+    "and use Grep's head_limit: hub entities match thousands of lines and "
+    "oversized dumps are truncated. Follow the task instructions exactly "
+    "and end with the required FINAL line."
 )
+
+#: Tool results stream back as single JSON messages; the SDK default buffer
+#: (1 MiB) dies on a broad Grep over the 4.3 MB MetaQA Turtle file (observed
+#: live: hub-entity match killed a B2 run at task 100).
+MAX_BUFFER_SIZE = 10_000_000
 
 _FINAL_RE = re.compile(r"FINAL:\s*([^\s`*]+)")
 _FINAL_LINE_RE = re.compile(r"FINAL:\s*(.+)")
@@ -174,6 +181,14 @@ def parse_final_pairs(text: str) -> list[str] | None:
 
 
 def build_condition_options(
+    kb_path: Path, condition: str, model: str | None
+) -> ClaudeAgentOptions:
+    options = _condition_options(kb_path, condition, model)
+    options.max_buffer_size = MAX_BUFFER_SIZE
+    return options
+
+
+def _condition_options(
     kb_path: Path, condition: str, model: str | None
 ) -> ClaudeAgentOptions:
     if condition in ("B0", "B1", "B1p"):
@@ -309,18 +324,22 @@ async def run_task(
     text_parts: list[str] = []
     tool_calls: dict[str, int] = {}
     cost = None
+    error = None
     start = time.monotonic()
-    async with ClaudeSDKClient(options=options) as client:
-        await client.query(prompt)
-        async for message in client.receive_response():
-            if isinstance(message, AssistantMessage):
-                for block in message.content:
-                    if isinstance(block, ToolUseBlock):
-                        tool_calls[block.name] = tool_calls.get(block.name, 0) + 1
-                    elif hasattr(block, "text"):
-                        text_parts.append(block.text)
-            elif isinstance(message, ResultMessage):
-                cost = message.total_cost_usd
+    try:
+        async with ClaudeSDKClient(options=options) as client:
+            await client.query(prompt)
+            async for message in client.receive_response():
+                if isinstance(message, AssistantMessage):
+                    for block in message.content:
+                        if isinstance(block, ToolUseBlock):
+                            tool_calls[block.name] = tool_calls.get(block.name, 0) + 1
+                        elif hasattr(block, "text"):
+                            text_parts.append(block.text)
+                elif isinstance(message, ResultMessage):
+                    cost = message.total_cost_usd
+    except Exception as e:  # one broken session must not kill a 600-task run
+        error = f"{type(e).__name__}: {e}"
     text = "\n".join(text_parts)
     pred = parse_final_pairs(text) if task_type == "audit" else parse_final(text)
     gold = gold_of(task, task_type)
@@ -337,6 +356,8 @@ async def run_task(
         "tool_calls": tool_calls,
         "prompt_rev": PROMPT_REV,
     }
+    if error:
+        record["error"] = error
     if extras:
         record.update(extras)
     if task_type == "claims":
