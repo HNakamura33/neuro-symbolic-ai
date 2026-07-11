@@ -475,7 +475,6 @@ clang = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "libclang" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
 ]
@@ -497,7 +496,6 @@ provides-extras = ["clang"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "libclang", specifier = ">=18" },
     { name = "pytest", specifier = ">=8.0" },
     { name = "pytest-asyncio", specifier = ">=0.24" },
 ]

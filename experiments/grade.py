@@ -26,7 +26,13 @@ def load_records(path: Path) -> list[dict]:
 
 
 def accuracy(records: list[dict]) -> float:
-    return sum(r["correct"] for r in records) / len(records) if records else 0.0
+    # coding4a records predate the shared schema and carry "passed" instead
+    # of "correct"; treat them uniformly so mixed result files aggregate.
+    return (
+        sum(r.get("correct", r.get("passed", False)) for r in records) / len(records)
+        if records
+        else 0.0
+    )
 
 
 def three_way_metrics(records: list[dict]) -> dict:
@@ -91,9 +97,10 @@ def paired_bootstrap(
     means.sort()
     lo = means[int(0.025 * n_resamples)]
     hi = means[int(0.975 * n_resamples)]
-    # Sign-flip p-value: how often a zero-centered resample is as extreme.
+    # Sign-flip p-value: how often a zero-centered resample mean is at least
+    # as extreme as the observed effect.
     centered = [m - observed for m in means]
-    p = sum(1 for m in centered if abs(m + observed) >= abs(observed)) / n_resamples
+    p = sum(1 for m in centered if abs(m) >= abs(observed)) / n_resamples
     return {"mean_diff": observed, "ci95": (lo, hi), "p_value": min(1.0, p)}
 
 
@@ -104,22 +111,25 @@ def summarize(records: list[dict]) -> dict:
         "accuracy": accuracy(records),
         "mean_cost_usd": _mean([r["cost_usd"] for r in records if r.get("cost_usd") is not None]),
         "mean_seconds": _mean([r["seconds"] for r in records if r.get("seconds") is not None]),
-        "unparsed": sum(1 for r in records if r["pred"] is None),
+        "unparsed": sum(1 for r in records if "pred" in r and r["pred"] is None),
     }
-    if records and records[0]["task_type"] == "claims":
+    task_type = records[0].get("task_type") if records else None
+    if task_type == "claims":
         out["three_way"] = three_way_metrics(records)
-    if records and records[0]["task_type"] == "qa":
+    if task_type == "qa":
         by_hops: dict[int, list[dict]] = {}
         for r in records:
             by_hops.setdefault(r.get("hops"), []).append(r)
         out["accuracy_by_hops"] = {k: accuracy(v) for k, v in sorted(by_hops.items())}
-    if records and records[0]["task_type"] == "audit":
+    if task_type == "audit":
         prec = _mean([r["precision"] for r in records if r.get("precision") is not None])
         rec = _mean([r["recall"] for r in records if r.get("recall") is not None])
         out["mean_precision"] = prec
         out["mean_recall"] = rec
-        if prec and rec:
-            out["f1"] = 2 * prec * rec / (prec + rec)
+        # None means unmeasured; 0.0 is a real (worst-case) score and must
+        # still yield an explicit f1 of 0.0, not a missing key.
+        if prec is not None and rec is not None:
+            out["f1"] = 2 * prec * rec / (prec + rec) if prec + rec else 0.0
     tool_totals: Counter = Counter()
     for r in records:
         tool_totals.update(r.get("tool_calls") or {})

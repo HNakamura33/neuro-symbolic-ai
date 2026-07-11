@@ -182,6 +182,11 @@ def proofwriter_src(tmp_path: Path) -> Path:
                        "representation": fact("Anne", "is", "nice", "-")},
                 "Q4": {"question": "Bob is not kind.", "answer": "unknown", "QDep": 0,
                        "representation": fact("Bob", "is", "kind", "-")},
+                # contradicted gold: the positive-only converted KB can never
+                # reproduce it (no functional properties / differentFrom), so
+                # validation must drop it instead of letting it through.
+                "Q5": {"question": "Anne is big.", "answer": "false", "QDep": 1,
+                       "representation": fact("Anne", "is", "big")},
             },
         ),
         # excluded: negated rule consequent
@@ -255,7 +260,8 @@ def test_proofwriter_mapping_and_labels(proofwriter_src: Path, tmp_path: Path):
         "grounded_rule": 1,
     }
     assert meta["question_exclusion_reasons"]["entailed_not_reproduced"] == 1
-    assert meta["validation"] == {"enabled": True, "claims_dropped": 1}
+    assert meta["question_exclusion_reasons"]["contradicted_not_reproduced"] == 1
+    assert meta["validation"] == {"enabled": True, "claims_dropped": 2}
     assert meta["labels"] == {"entailed": 2, "unknown": 2}
 
 
@@ -271,7 +277,7 @@ def test_proofwriter_gold_agrees_with_kb_verify(proofwriter_src: Path, tmp_path:
 def test_proofwriter_no_validate_keeps_unreproducible_claims(proofwriter_src: Path, tmp_path: Path):
     meta = convert_proofwriter(proofwriter_src, tmp_path / "out", validate=False)
     assert meta["validation"] == {"enabled": False}
-    assert meta["claims_written"] == 5  # item5-Q1 kept
+    assert meta["claims_written"] == 6  # item1-Q5 and item5-Q1 kept
 
 
 # -- perturbation -----------------------------------------------------------------------

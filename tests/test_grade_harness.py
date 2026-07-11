@@ -50,8 +50,54 @@ def test_paired_bootstrap_detects_a_clear_difference():
     r = paired_bootstrap(a, b, n_resamples=2000, seed=0)
     assert r["mean_diff"] == 1.0
     assert r["ci95"][0] > 0.9
+    # A perfectly consistent maximal effect must be highly significant
+    # (the pre-fix implementation returned p = 1.0 here).
+    assert r["p_value"] < 0.01
     same = paired_bootstrap(a, a, n_resamples=2000, seed=0)
     assert same["mean_diff"] == 0.0
+    # No effect: every centered resample is at least as extreme as 0.
+    assert same["p_value"] == 1.0
+
+
+def test_paired_bootstrap_p_value_tracks_effect_consistency():
+    # 28/30 positive: still a clear effect, small p.
+    a = [1.0] * 28 + [0.0] * 2
+    b = [0.0] * 28 + [1.0] * 2
+    strong = paired_bootstrap(a, b, n_resamples=2000, seed=0)
+    assert strong["p_value"] < 0.05
+    # 16/30 vs 14/30: weak effect, p must NOT be significant.
+    a = [1.0] * 16 + [0.0] * 14
+    b = [1.0] * 14 + [0.0] * 16
+    weak = paired_bootstrap(a, b, n_resamples=2000, seed=0)
+    assert weak["p_value"] > 0.05
+
+
+def test_summarize_audit_f1_zero_is_reported():
+    # precision 0.0 is a real worst-case score, not "unmeasured": f1 must be
+    # present and 0.0 (the pre-fix truthiness gate silently dropped the key).
+    records = [{**_rec("a0", ["x"], ["y"]), "task_type": "audit",
+                "precision": 0.0, "recall": 0.0}]
+    s = summarize(records)
+    assert s["mean_precision"] == 0.0
+    assert s["f1"] == 0.0
+
+
+def test_summarize_handles_coding4a_records():
+    # coding4a records carry passed (older files lack correct/pred/task_type);
+    # aggregation must not KeyError and accuracy is the pass rate.
+    records = [
+        {"task_id": "gcd", "condition": "plain", "model": "sonnet", "passed": True,
+         "n_cases": 5, "cases_failed": [], "cost_usd": 0.01, "seconds": 3.0,
+         "tool_calls": {"Edit": 1}, "cases_skipped": [], "run": 0},
+        {"task_id": "sqrt", "condition": "plain", "model": "sonnet", "passed": False,
+         "n_cases": 4, "cases_failed": [2], "cost_usd": 0.02, "seconds": 4.0,
+         "tool_calls": {}, "cases_skipped": [], "run": 0},
+    ]
+    s = summarize(records)
+    assert s["n"] == 2
+    assert s["accuracy"] == 0.5
+    assert s["unparsed"] == 0
+    assert accuracy(records) == 0.5
 
 
 def test_summarize_reports_hops_breakdown():
@@ -67,6 +113,17 @@ def test_parse_final():
     assert parse_final("thinking...\nFINAL: entailed") == "entailed"
     assert parse_final("FINAL: ns:tokyo\nwait no\nFINAL: ns:osaka.") == "ns:osaka"
     assert parse_final("no answer line") is None
+
+
+def test_gold_normalized_like_predictions():
+    # Entities can legitimately end in "." (sanitize_local keeps it); the
+    # gold side must go through the same trailing-punctuation strip as
+    # parse_final or such answers can never be graded correct.
+    from experiments.harness import normalize_answer
+
+    gold = "ns:Robert_Downey_Jr."
+    pred = parse_final("FINAL: ns:Robert_Downey_Jr.")
+    assert pred == normalize_answer(gold)
 
 
 def test_render_prompt_embeds_facts_only_for_b1():

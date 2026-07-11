@@ -166,9 +166,19 @@ def render_prompt(task: dict, task_type: str, condition: str, facts_ttl: str | N
     return body
 
 
+def normalize_answer(ans: str) -> str:
+    """Strip trailing punctuation the model may append after the answer.
+
+    Gold answers MUST pass through the same normalization before comparison:
+    entities can legitimately end in "." (ns:Robert_Downey_Jr.), so stripping
+    only the prediction side makes them structurally unmatchable.
+    """
+    return ans.rstrip(".,;:")
+
+
 def parse_final(text: str) -> str | None:
     matches = _FINAL_RE.findall(text)
-    return matches[-1].strip().rstrip(".,;:") if matches else None
+    return normalize_answer(matches[-1].strip()) if matches else None
 
 
 def parse_final_pairs(text: str) -> list[str] | None:
@@ -343,6 +353,10 @@ async def run_task(
     text = "\n".join(text_parts)
     pred = parse_final_pairs(text) if task_type == "audit" else parse_final(text)
     gold = gold_of(task, task_type)
+    if task_type == "audit":
+        correct = pred == gold  # replaced by the set comparison below
+    else:
+        correct = pred is not None and pred == normalize_answer(gold)
     record = {
         "task_id": task["id"],
         "task_type": task_type,
@@ -350,7 +364,7 @@ async def run_task(
         "model": model,
         "gold": gold,
         "pred": pred,
-        "correct": pred == gold,
+        "correct": correct,
         "cost_usd": cost,
         "seconds": round(time.monotonic() - start, 2),
         "tool_calls": tool_calls,
@@ -399,14 +413,17 @@ async def run_dataset(
         nbhd_index = load_neighborhood_index(dataset / kb_name)
     out.parent.mkdir(parents=True, exist_ok=True)
     for run in range(runs):
-        # Scratch copy so agent-side kb_add_triples can't pollute the dataset.
         with tempfile.TemporaryDirectory() as tmp:
             kb_copy = Path(tmp) / kb_name
-            shutil.copy(dataset / kb_name, kb_copy)
             prov_src = dataset / f"{kb_name.removesuffix('.ttl')}.prov.jsonl"
-            if prov_src.exists():  # provenance tool reads the sidecar
-                shutil.copy(prov_src, Path(tmp) / prov_src.name)
             for i, task in enumerate(tasks):
+                # Fresh scratch copy PER TASK: C1/C2 expose kb_add_triples,
+                # and add_triples persists to the scratch file — a per-run
+                # copy would leak task N's assertions into task N+1 and
+                # corrupt gold "unknown" judgments.
+                shutil.copy(dataset / kb_name, kb_copy)
+                if prov_src.exists():  # provenance tool reads the sidecar
+                    shutil.copy(prov_src, Path(tmp) / prov_src.name)
                 task_facts, extras = facts_ttl, None
                 if nbhd_index is not None:
                     task_facts, extras = neighborhood_facts(

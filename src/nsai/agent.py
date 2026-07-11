@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import warnings
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -31,9 +32,24 @@ console = Console()
 # through to _confirm_tool so every command is confirmed by the user.
 CODING_TOOLS = ["Read", "Glob", "Grep", "Edit", "Write", "TodoWrite"]
 
-# allowed_tools intentionally shadows the callback for the whole-tool entries
-# above; the callback only gates what falls through (Bash and everything else).
-warnings.filterwarnings("ignore", category=CanUseToolShadowedWarning)
+
+@contextmanager
+def _suppress_intentional_shadowing():
+    """In hybrid coding mode, allowed_tools intentionally shadows can_use_tool
+    for the whole-tool entries above — the callback only gates what falls
+    through (Bash and everything else). Suppress the SDK's advisory only
+    around our own client sessions: a module-level filter would also hide
+    accidental shadowing in every other importer of this module."""
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=CanUseToolShadowedWarning)
+        yield
+
+# The SDK spawns each can_use_tool control request as an independent task
+# with no serialization, so two Bash confirmations (e.g. main agent + a
+# subagent) can interleave and the 'y' typed for one command could be
+# consumed by the thread gating another. One lock makes prompt display and
+# input consumption a single critical section.
+_bash_prompt_lock = asyncio.Lock()
 
 
 async def _confirm_tool(
@@ -44,8 +60,9 @@ async def _confirm_tool(
             message=f"{tool_name} is not available in this session."
         )
     command = tool_input.get("command", "")
-    console.print(f"[yellow]bash?[/yellow] [bold]{command}[/bold]")
-    answer = await asyncio.to_thread(input, "  run this command? [y/N] ")
+    async with _bash_prompt_lock:
+        console.print(f"[yellow]bash?[/yellow] [bold]{command}[/bold]")
+        answer = await asyncio.to_thread(input, "  run this command? [y/N] ")
     if answer.strip().lower() in ("y", "yes"):
         return PermissionResultAllow()
     return PermissionResultDeny(message="User declined to run this command.")
@@ -152,9 +169,10 @@ async def run_once(
     """One-shot: send a single prompt and print the response."""
     kb = KnowledgeBase(kb_path)
     options = build_options(kb, model, coding=coding, full_auto=full_auto, bypass=bypass)
-    async with ClaudeSDKClient(options=options) as client:
-        await client.query(prompt)
-        await _render_response(client, show_cost=True)
+    with _suppress_intentional_shadowing():
+        async with ClaudeSDKClient(options=options) as client:
+            await client.query(prompt)
+            await _render_response(client, show_cost=True)
 
 
 async def run_chat(
@@ -183,19 +201,20 @@ async def run_chat(
         f"[dim](KB: {kb_path}, {stats['triples']} triples — /exit to quit)[/dim]"
     )
 
-    async with ClaudeSDKClient(options=options) as client:
-        while True:
-            try:
-                user_input = console.input("[bold cyan]you>[/bold cyan] ").strip()
-            except (EOFError, KeyboardInterrupt):
-                break
-            if not user_input:
-                continue
-            if user_input in ("/exit", "/quit", "/q"):
-                break
-            await client.query(user_input)
-            await _render_response(client)
-            console.print()
+    with _suppress_intentional_shadowing():
+        async with ClaudeSDKClient(options=options) as client:
+            while True:
+                try:
+                    user_input = console.input("[bold cyan]you>[/bold cyan] ").strip()
+                except (EOFError, KeyboardInterrupt):
+                    break
+                if not user_input:
+                    continue
+                if user_input in ("/exit", "/quit", "/q"):
+                    break
+                await client.query(user_input)
+                await _render_response(client)
+                console.print()
 
     console.print("[dim]bye — KB saved.[/dim]")
 

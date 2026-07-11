@@ -40,10 +40,9 @@ import tempfile
 import time
 from pathlib import Path
 
-DEFAULT_QUIXBUGS = Path(
-    "/private/tmp/claude-501/-Users-hirotaka-neuro-symbolic-ai/"
-    "bef9b3dc-a1f8-4890-b6fc-55d770d86203/scratchpad/quixbugs-cache"
-)
+# Conventional repo-relative checkout location; override with --quixbugs.
+# Fetch with: git clone https://github.com/jkoppel/QuixBugs data/raw/quixbugs
+DEFAULT_QUIXBUGS = Path("data/raw/quixbugs")
 
 CONDITIONS = ("plain", "nsai")
 
@@ -312,9 +311,11 @@ async def run_task(
         result = grade(target, name, cases)
     return {
         "task_id": name,
+        "task_type": "coding4a",
         "condition": condition,
         "model": model,
         "passed": result["passed"],
+        "correct": result["passed"],  # shared schema: grade.py/report.py aggregate on this
         "n_cases": result["n_cases"],
         "cases_failed": result["cases_failed"],
         "cost_usd": cost,
@@ -373,6 +374,17 @@ def main() -> None:
         build_suite_view(args.suite, view)
         args.quixbugs = view
 
+    # A missing dataset must fail loudly: Path.glob on a nonexistent
+    # directory silently yields nothing, which would look like a successful
+    # empty experiment (0 records, exit 0).
+    if not args.quixbugs.is_dir():
+        ap.error(
+            f"QuixBugs directory not found: {args.quixbugs}\n"
+            "Fetch it first:  git clone https://github.com/jkoppel/QuixBugs "
+            f"{DEFAULT_QUIXBUGS}\n"
+            "or point --quixbugs at an existing checkout (or use --suite)."
+        )
+
     if args.programs:
         programs = [p.strip() for p in args.programs.split(",") if p.strip()]
         missing = [p for p in programs if p not in set(list_programs(args.quixbugs))]
@@ -380,6 +392,11 @@ def main() -> None:
             ap.error(f"no json testcases for: {', '.join(missing)}")
     else:
         programs = list_programs(args.quixbugs)
+    if not programs:
+        ap.error(
+            f"no gradable programs under {args.quixbugs} — expected "
+            "python_programs/<name>.py with matching json_testcases/<name>.json"
+        )
     if args.limit:
         programs = programs[: args.limit]
 

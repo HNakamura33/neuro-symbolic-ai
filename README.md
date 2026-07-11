@@ -70,6 +70,10 @@ uv sync
 export ANTHROPIC_API_KEY=sk-ant-...
 ```
 
+開発(テスト実行)は `uv sync --dev`。code2kb の libclang バックエンドを触るときだけ
+`uv sync --dev --extra clang` を使う(libclang は wheel のないプラットフォームがあるため
+dev 必須にはしていない。未インストールでも該当テストは自動スキップされる)。
+
 ## 使い方
 
 ### エージェント経由(LLM)

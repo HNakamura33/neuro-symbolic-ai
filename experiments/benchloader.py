@@ -53,7 +53,7 @@ from collections import Counter
 from pathlib import Path
 
 import owlrl
-from rdflib import Graph, URIRef
+from rdflib import OWL, RDF, Graph, URIRef
 
 from nsai.kb import _PREFIXES, NS, KnowledgeBase, parse_term
 
@@ -127,6 +127,18 @@ def _closure(triples: list[Triple]) -> Graph:
         g.add((parse_term(s), parse_term(p), parse_term(o, as_object=True)))
     owlrl.DeductiveClosure(owlrl.OWLRL_Semantics).expand(g)
     return g
+
+
+def _closure_contradicts(closure: Graph, s, p, o) -> bool:
+    """Mirror of KnowledgeBase.verify_triple's 'contradicted' conditions,
+    evaluated against a pre-computed closure graph. A converted KB that can
+    never satisfy these (e.g. positive-only output with no functional
+    properties) cannot reproduce a 'contradicted' gold label."""
+    if (p, RDF.type, OWL.FunctionalProperty) in closure and any(
+        x != o for x in closure.objects(s, p)
+    ):
+        return True
+    return p == OWL.sameAs and (s, OWL.differentFrom, o) in closure
 
 
 # -- MetaQA -----------------------------------------------------------------------
@@ -445,16 +457,22 @@ def convert_proofwriter(src: Path, out: Path, validate: bool = True) -> dict:
         closure = _closure(all_triples)
         kept = []
         for c in claims:
-            entailed = (
-                parse_term(c["subject"]),
-                parse_term(c["predicate"]),
-                parse_term(c["object"], as_object=True),
-            ) in closure
+            s = parse_term(c["subject"])
+            p = parse_term(c["predicate"])
+            o = parse_term(c["object"], as_object=True)
+            entailed = (s, p, o) in closure
+            contradicted = _closure_contradicts(closure, s, p, o)
             if c["label"] == "entailed" and not entailed:
                 excluded_questions["entailed_not_reproduced"] += 1
                 continue
+            if c["label"] == "contradicted" and not contradicted:
+                excluded_questions["contradicted_not_reproduced"] += 1
+                continue
             if c["label"] == "unknown" and entailed:
                 excluded_questions["unknown_but_entailed"] += 1
+                continue
+            if c["label"] == "unknown" and contradicted:
+                excluded_questions["unknown_but_contradicted"] += 1
                 continue
             kept.append(c)
         validation["claims_dropped"] = len(claims) - len(kept)
