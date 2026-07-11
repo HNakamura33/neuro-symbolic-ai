@@ -1,0 +1,15 @@
+{
+ "seed": 42,
+ "size_requested": 5000,
+ "triples": 4717,
+ "people": 1000,
+ "claims": 300,
+ "qa": 200,
+ "hops": [
+  2,
+  3,
+  4,
+  6
+ ],
+ "subset": "inference-required claims only (kinds: different_from, functional_conflict, inferred_same_as, inferred_subclass) \u2014 cost-reduced lane A"
+}

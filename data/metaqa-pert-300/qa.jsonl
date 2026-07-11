@@ -1,0 +1,300 @@
+{"id": "metaqa-1hop-163", "question": "when was the ent_195740 ent_125710 released", "start": "ns:ent_125710", "answer": "ns:ent_167753", "hops": 1}
+{"id": "metaqa-1hop-28", "question": "what was the release year of the movie ent_236504", "start": "ns:ent_236504", "answer": "ns:ent_095325", "hops": 1}
+{"id": "metaqa-1hop-6", "question": "who was ent_167575 directed by", "start": "ns:ent_167575", "answer": "ns:ent_966588", "hops": 1}
+{"id": "metaqa-1hop-189", "question": "which ent_195740 did ent_311166 write", "start": "ns:ent_311166", "answer": "ns:ent_867463", "hops": 1}
+{"id": "metaqa-1hop-70", "question": "who directed the movie ent_988062", "start": "ns:ent_988062", "answer": "ns:ent_176795", "hops": 1}
+{"id": "metaqa-1hop-62", "question": "what genre is ent_619752 in", "start": "ns:ent_619752", "answer": "ns:ent_606205", "hops": 1}
+{"id": "metaqa-1hop-57", "question": "what movies did ent_595361 star in", "start": "ns:ent_595361", "answer": "ns:ent_626004", "hops": 1}
+{"id": "metaqa-1hop-35", "question": "what movie did ent_384655 write ent_252279 for", "start": "ns:ent_384655", "answer": "ns:ent_919832", "hops": 1}
+{"id": "metaqa-1hop-188", "question": "the ent_195740 ent_719737 was written by who", "start": "ns:ent_719737", "answer": "ns:ent_760448", "hops": 1}
+{"id": "metaqa-1hop-26", "question": "what was the release year of the movie ent_485875", "start": "ns:ent_485875", "answer": "ns:ent_167753", "hops": 1}
+{"id": "metaqa-1hop-173", "question": "who wrote the ent_962562 for ent_330479", "start": "ns:ent_330479", "answer": "ns:ent_055846", "hops": 1}
+{"id": "metaqa-1hop-139", "question": "which movie did ent_513711 write", "start": "ns:ent_513711", "answer": "ns:ent_991284", "hops": 1}
+{"id": "metaqa-1hop-22", "question": "what was the release date of the ent_195740 ent_796070", "start": "ns:ent_796070", "answer": "ns:ent_792495", "hops": 1}
+{"id": "metaqa-1hop-151", "question": "ent_197123 appears in which movies", "start": "ns:ent_197123", "answer": "ns:ent_202698", "hops": 1}
+{"id": "metaqa-1hop-108", "question": "when was the movie ent_533279 released", "start": "ns:ent_533279", "answer": "ns:ent_170555", "hops": 1}
+{"id": "metaqa-1hop-8", "question": "what is a ent_195740 written by ent_741482", "start": "ns:ent_741482", "answer": "ns:ent_601755", "hops": 1}
+{"id": "metaqa-1hop-7", "question": "who is the ent_049168 for ent_678970", "start": "ns:ent_678970", "answer": "ns:ent_329563", "hops": 1}
+{"id": "metaqa-1hop-23", "question": "what films did ent_615357 act in", "start": "ns:ent_615357", "answer": "ns:ent_034812", "hops": 1}
+{"id": "metaqa-1hop-55", "question": "the ent_049168 of ent_554447 was", "start": "ns:ent_554447", "answer": "ns:ent_679237", "hops": 1}
+{"id": "metaqa-1hop-59", "question": "what words describe ent_467951", "start": "ns:ent_467951", "answer": "ns:ent_799577", "hops": 1}
+{"id": "metaqa-1hop-129", "question": "what is the main ent_060899 in ent_024993", "start": "ns:ent_024993", "answer": "ns:ent_008248", "hops": 1}
+{"id": "metaqa-1hop-154", "question": "ent_210445, when was it released", "start": "ns:ent_210445", "answer": "ns:ent_517488", "hops": 1}
+{"id": "metaqa-1hop-197", "question": "who is listed as ent_049168 for ent_078589", "start": "ns:ent_078589", "answer": "ns:ent_797662", "hops": 1}
+{"id": "metaqa-1hop-143", "question": "what is the primary ent_060899 in ent_720892", "start": "ns:ent_720892", "answer": "ns:ent_700015", "hops": 1}
+{"id": "metaqa-1hop-50", "question": "what is the genre of the movie ent_448903", "start": "ns:ent_448903", "answer": "ns:ent_884027", "hops": 1}
+{"id": "metaqa-1hop-166", "question": "the ent_195740 ent_959298 was directed by who", "start": "ns:ent_959298", "answer": "ns:ent_713158", "hops": 1}
+{"id": "metaqa-1hop-191", "question": "who was the ent_158511 of the ent_195740 ent_704005", "start": "ns:ent_704005", "answer": "ns:ent_284686", "hops": 1}
+{"id": "metaqa-1hop-107", "question": "what was the release date of the ent_195740 ent_138741", "start": "ns:ent_138741", "answer": "ns:ent_611878", "hops": 1}
+{"id": "metaqa-1hop-56", "question": "which movies was ent_152795 the ent_158511 of", "start": "ns:ent_152795", "answer": "ns:ent_175566", "hops": 1}
+{"id": "metaqa-1hop-114", "question": "what movies was ent_089139 an actor in", "start": "ns:ent_089139", "answer": "ns:ent_992217", "hops": 1}
+{"id": "metaqa-1hop-150", "question": "what is a movie written by ent_025197", "start": "ns:ent_025197", "answer": "ns:ent_905700", "hops": 1}
+{"id": "metaqa-1hop-71", "question": "ent_531607, when was it released", "start": "ns:ent_531607", "answer": "ns:ent_277746", "hops": 1}
+{"id": "metaqa-1hop-1", "question": "who starred in ent_971632", "start": "ns:ent_971632", "answer": "ns:ent_859860", "hops": 1}
+{"id": "metaqa-1hop-40", "question": "what was the release date of ent_759233", "start": "ns:ent_759233", "answer": "ns:ent_279946", "hops": 1}
+{"id": "metaqa-1hop-185", "question": "what movies can be described by ent_936575", "start": "ns:ent_936575", "answer": "ns:ent_415943", "hops": 1}
+{"id": "metaqa-1hop-87", "question": "what is the genre of ent_289282", "start": "ns:ent_289282", "answer": "ns:ent_308721", "hops": 1}
+{"id": "metaqa-1hop-168", "question": "what does ent_317329 act in", "start": "ns:ent_317329", "answer": "ns:ent_142056", "hops": 1}
+{"id": "metaqa-1hop-39", "question": "the ent_195740 ent_121047 was directed by who", "start": "ns:ent_121047", "answer": "ns:ent_996725", "hops": 1}
+{"id": "metaqa-1hop-181", "question": "which words describe ent_822215", "start": "ns:ent_822215", "answer": "ns:ent_363886", "hops": 1}
+{"id": "metaqa-1hop-86", "question": "who directed the movie ent_974230", "start": "ns:ent_974230", "answer": "ns:ent_979615", "hops": 1}
+{"id": "metaqa-1hop-190", "question": "who is the ent_049168 of ent_160402", "start": "ns:ent_160402", "answer": "ns:ent_348206", "hops": 1}
+{"id": "metaqa-1hop-182", "question": "who directed the ent_195740 ent_236568", "start": "ns:ent_236568", "answer": "ns:ent_722689", "hops": 1}
+{"id": "metaqa-1hop-97", "question": "when was ent_920612 released", "start": "ns:ent_920612", "answer": "ns:ent_958972", "hops": 1}
+{"id": "metaqa-1hop-24", "question": "what was the release date of the ent_195740 ent_891638", "start": "ns:ent_891638", "answer": "ns:ent_792495", "hops": 1}
+{"id": "metaqa-1hop-91", "question": "who is the ent_049168 of ent_182992", "start": "ns:ent_182992", "answer": "ns:ent_961460", "hops": 1}
+{"id": "metaqa-1hop-88", "question": "what genre of ent_195740 is ent_246355", "start": "ns:ent_246355", "answer": "ns:ent_922682", "hops": 1}
+{"id": "metaqa-1hop-67", "question": "the movie ent_000553, when was it released", "start": "ns:ent_000553", "answer": "ns:ent_280746", "hops": 1}
+{"id": "metaqa-1hop-11", "question": "which movies was ent_403733 a ent_158511 on", "start": "ns:ent_403733", "answer": "ns:ent_210098", "hops": 1}
+{"id": "metaqa-1hop-117", "question": "which ent_195740 did ent_312687 write ent_252279 for", "start": "ns:ent_312687", "answer": "ns:ent_363541", "hops": 1}
+{"id": "metaqa-1hop-137", "question": "who is the ent_185924 of ent_177233", "start": "ns:ent_177233", "answer": "ns:ent_341244", "hops": 1}
+{"id": "metaqa-1hop-31", "question": "who is the ent_049168 for ent_230426", "start": "ns:ent_230426", "answer": "ns:ent_874972", "hops": 1}
+{"id": "metaqa-1hop-96", "question": "the movie ent_964307, when was it released", "start": "ns:ent_964307", "answer": "ns:ent_844151", "hops": 1}
+{"id": "metaqa-1hop-20", "question": "who'ent_965508 the ent_049168 of ent_069793", "start": "ns:ent_069793", "answer": "ns:ent_554527", "hops": 1}
+{"id": "metaqa-1hop-141", "question": "describe ent_676758", "start": "ns:ent_676758", "answer": "ns:ent_017242", "hops": 1}
+{"id": "metaqa-1hop-75", "question": "the ent_049168 of ent_425331 was", "start": "ns:ent_425331", "answer": "ns:ent_242880", "hops": 1}
+{"id": "metaqa-1hop-92", "question": "when was the movie ent_193076 released", "start": "ns:ent_193076", "answer": "ns:ent_258607", "hops": 1}
+{"id": "metaqa-1hop-49", "question": "which films did ent_944956 direct", "start": "ns:ent_944956", "answer": "ns:ent_262227", "hops": 1}
+{"id": "metaqa-1hop-17", "question": "what does ent_217146 act in", "start": "ns:ent_217146", "answer": "ns:ent_349709", "hops": 1}
+{"id": "metaqa-1hop-152", "question": "who acted in the movie ent_054638", "start": "ns:ent_054638", "answer": "ns:ent_213464", "hops": 1}
+{"id": "metaqa-1hop-58", "question": "what movies are about ent_801829", "start": "ns:ent_801829", "answer": "ns:ent_343032", "hops": 1}
+{"id": "metaqa-1hop-74", "question": "when was the ent_195740 ent_959703 released", "start": "ns:ent_959703", "answer": "ns:ent_074870", "hops": 1}
+{"id": "metaqa-1hop-147", "question": "who wrote the ent_195740 ent_826215", "start": "ns:ent_826215", "answer": "ns:ent_744385", "hops": 1}
+{"id": "metaqa-1hop-180", "question": "what sort of movie is ent_050768", "start": "ns:ent_050768", "answer": "ns:ent_884027", "hops": 1}
+{"id": "metaqa-1hop-25", "question": "who is listed as ent_049168 for ent_699764", "start": "ns:ent_699764", "answer": "ns:ent_759589", "hops": 1}
+{"id": "metaqa-1hop-157", "question": "what was the release date of ent_473431", "start": "ns:ent_473431", "answer": "ns:ent_171339", "hops": 1}
+{"id": "metaqa-1hop-199", "question": "which ent_195740 did ent_631350 write", "start": "ns:ent_631350", "answer": "ns:ent_420873", "hops": 1}
+{"id": "metaqa-1hop-116", "question": "what films did ent_878780 star in", "start": "ns:ent_878780", "answer": "ns:ent_148195", "hops": 1}
+{"id": "metaqa-1hop-93", "question": "when was the ent_195740 ent_109619 released", "start": "ns:ent_109619", "answer": "ns:ent_049405", "hops": 1}
+{"id": "metaqa-1hop-41", "question": "what ent_060899 is ent_565789 in", "start": "ns:ent_565789", "answer": "ns:ent_118661", "hops": 1}
+{"id": "metaqa-1hop-94", "question": "what was the release year of the movie ent_171746", "start": "ns:ent_171746", "answer": "ns:ent_442666", "hops": 1}
+{"id": "metaqa-1hop-90", "question": "what was the release year of the ent_195740 ent_406951", "start": "ns:ent_406951", "answer": "ns:ent_666563", "hops": 1}
+{"id": "metaqa-1hop-53", "question": "what kind of movie is ent_945055", "start": "ns:ent_945055", "answer": "ns:ent_884027", "hops": 1}
+{"id": "metaqa-1hop-68", "question": "what is the genre of the ent_195740 ent_529663", "start": "ns:ent_529663", "answer": "ns:ent_308721", "hops": 1}
+{"id": "metaqa-1hop-89", "question": "the ent_195740 ent_556464 was directed by who", "start": "ns:ent_556464", "answer": "ns:ent_529050", "hops": 1}
+{"id": "metaqa-1hop-119", "question": "what is the primary ent_060899 in ent_789460", "start": "ns:ent_789460", "answer": "ns:ent_118661", "hops": 1}
+{"id": "metaqa-1hop-164", "question": "who wrote the ent_195740 ent_979115", "start": "ns:ent_979115", "answer": "ns:ent_877705", "hops": 1}
+{"id": "metaqa-1hop-82", "question": "who directed the ent_195740 ent_312661", "start": "ns:ent_312661", "answer": "ns:ent_933447", "hops": 1}
+{"id": "metaqa-1hop-9", "question": "who are the ent_863937 in ent_316797", "start": "ns:ent_316797", "answer": "ns:ent_003223", "hops": 1}
+{"id": "metaqa-1hop-77", "question": "what genre is ent_524139 in", "start": "ns:ent_524139", "answer": "ns:ent_884027", "hops": 1}
+{"id": "metaqa-1hop-81", "question": "what type of movie is ent_497638", "start": "ns:ent_497638", "answer": "ns:ent_308721", "hops": 1}
+{"id": "metaqa-1hop-21", "question": "who was ent_907216 written by", "start": "ns:ent_907216", "answer": "ns:ent_736378", "hops": 1}
+{"id": "metaqa-1hop-127", "question": "when was the ent_195740 ent_687932 released", "start": "ns:ent_687932", "answer": "ns:ent_167753", "hops": 1}
+{"id": "metaqa-1hop-132", "question": "who is the ent_049168 of ent_954578", "start": "ns:ent_954578", "answer": "ns:ent_685761", "hops": 1}
+{"id": "metaqa-1hop-149", "question": "what was ent_697848 the ent_049168 of", "start": "ns:ent_697848", "answer": "ns:ent_792952", "hops": 1}
+{"id": "metaqa-1hop-138", "question": "who directed the ent_195740 ent_578972", "start": "ns:ent_578972", "answer": "ns:ent_110825", "hops": 1}
+{"id": "metaqa-1hop-169", "question": "when was ent_934703 released", "start": "ns:ent_934703", "answer": "ns:ent_222955", "hops": 1}
+{"id": "metaqa-1hop-48", "question": "who stars in ent_641784", "start": "ns:ent_641784", "answer": "ns:ent_269845", "hops": 1}
+{"id": "metaqa-1hop-34", "question": "the ent_049168 of ent_537086 was who", "start": "ns:ent_537086", "answer": "ns:ent_890136", "hops": 1}
+{"id": "metaqa-1hop-120", "question": "the ent_195740 ent_527685 was directed by who", "start": "ns:ent_527685", "answer": "ns:ent_205681", "hops": 1}
+{"id": "metaqa-1hop-178", "question": "what is the genre of the ent_195740 ent_442978", "start": "ns:ent_442978", "answer": "ns:ent_884027", "hops": 1}
+{"id": "metaqa-1hop-134", "question": "who was the ent_049168 of ent_070953", "start": "ns:ent_070953", "answer": "ns:ent_829868", "hops": 1}
+{"id": "metaqa-1hop-198", "question": "what is the genre for ent_487070", "start": "ns:ent_487070", "answer": "ns:ent_308721", "hops": 1}
+{"id": "metaqa-1hop-124", "question": "when was the ent_195740 ent_164845 released", "start": "ns:ent_164845", "answer": "ns:ent_171339", "hops": 1}
+{"id": "metaqa-1hop-131", "question": "what are some words that describe movie ent_455138", "start": "ns:ent_455138", "answer": "ns:ent_595183", "hops": 1}
+{"id": "metaqa-1hop-98", "question": "who is the ent_049168 that directed ent_562146", "start": "ns:ent_562146", "answer": "ns:ent_465087", "hops": 1}
+{"id": "metaqa-1hop-99", "question": "which person wrote the movie ent_892423", "start": "ns:ent_892423", "answer": "ns:ent_457729", "hops": 1}
+{"id": "metaqa-1hop-183", "question": "describe ent_434152", "start": "ns:ent_434152", "answer": "ns:ent_286740", "hops": 1}
+{"id": "metaqa-1hop-29", "question": "which person wrote ent_820375", "start": "ns:ent_820375", "answer": "ns:ent_447470", "hops": 1}
+{"id": "metaqa-1hop-4", "question": "who is the ent_049168 that directed ent_178593", "start": "ns:ent_178593", "answer": "ns:ent_524497", "hops": 1}
+{"id": "metaqa-1hop-174", "question": "what movies was ent_759490 the ent_158511 of", "start": "ns:ent_759490", "answer": "ns:ent_874988", "hops": 1}
+{"id": "metaqa-2hop-102", "question": "which person directed the films written by ent_117771", "start": "ns:ent_117771", "answer": "ns:ent_776424", "hops": 2}
+{"id": "metaqa-2hop-68", "question": "the movies written by ent_912708 were released in which years", "start": "ns:ent_912708", "answer": "ns:ent_229974", "hops": 2}
+{"id": "metaqa-2hop-16", "question": "which person directed the films written by ent_461267", "start": "ns:ent_461267", "answer": "ns:ent_842583", "hops": 2}
+{"id": "metaqa-2hop-54", "question": "what types are the movies written by ent_736378", "start": "ns:ent_736378", "answer": "ns:ent_308721", "hops": 2}
+{"id": "metaqa-2hop-145", "question": "which movies share the same ent_049168 of ent_872073", "start": "ns:ent_872073", "answer": "ns:ent_590438", "hops": 2}
+{"id": "metaqa-2hop-183", "question": "the movies directed by ent_941771 were written by who", "start": "ns:ent_941771", "answer": "ns:ent_507259", "hops": 2}
+{"id": "metaqa-2hop-80", "question": "what are the genres of the films directed by ent_588207", "start": "ns:ent_588207", "answer": "ns:ent_308721", "hops": 2}
+{"id": "metaqa-2hop-196", "question": "what were the release years of the movies acted by ent_396672", "start": "ns:ent_396672", "answer": "ns:ent_517488", "hops": 2}
+{"id": "metaqa-2hop-167", "question": "when did the movies acted by ent_365164 release", "start": "ns:ent_365164", "answer": "ns:ent_221231", "hops": 2}
+{"id": "metaqa-2hop-127", "question": "who starred in the films directed by ent_709083", "start": "ns:ent_709083", "answer": "ns:ent_689606", "hops": 2}
+{"id": "metaqa-2hop-101", "question": "the films written by ent_697724 were in which languages", "start": "ns:ent_697724", "answer": "ns:ent_008248", "hops": 2}
+{"id": "metaqa-2hop-164", "question": "the films acted by ent_906285 were written by who", "start": "ns:ent_906285", "answer": "ns:ent_164417", "hops": 2}
+{"id": "metaqa-2hop-117", "question": "who directed the films starred by ent_305002", "start": "ns:ent_305002", "answer": "ns:ent_378411", "hops": 2}
+{"id": "metaqa-2hop-36", "question": "when were the films written by ent_237256 released", "start": "ns:ent_237256", "answer": "ns:ent_229974", "hops": 2}
+{"id": "metaqa-2hop-67", "question": "what genres are the movies written by ent_094617 in", "start": "ns:ent_094617", "answer": "ns:ent_308721", "hops": 2}
+{"id": "metaqa-2hop-35", "question": "what genres do the films starred by ent_920538 fall under", "start": "ns:ent_920538", "answer": "ns:ent_884027", "hops": 2}
+{"id": "metaqa-2hop-63", "question": "what are the genres of the films written by ent_761474", "start": "ns:ent_761474", "answer": "ns:ent_884027", "hops": 2}
+{"id": "metaqa-2hop-143", "question": "who directed the movies written by ent_530228", "start": "ns:ent_530228", "answer": "ns:ent_980696", "hops": 2}
+{"id": "metaqa-2hop-137", "question": "the movies starred by ent_025402 were written by who", "start": "ns:ent_025402", "answer": "ns:ent_503683", "hops": 2}
+{"id": "metaqa-2hop-185", "question": "what are the genres of the films written by ent_056962", "start": "ns:ent_056962", "answer": "ns:ent_884027", "hops": 2}
+{"id": "metaqa-2hop-149", "question": "the scriptwriter of ent_062283 also wrote movies", "start": "ns:ent_062283", "answer": "ns:ent_897097", "hops": 2}
+{"id": "metaqa-2hop-109", "question": "which screenwriters co-wrote movies with ent_440919", "start": "ns:ent_440919", "answer": "ns:ent_994138", "hops": 2}
+{"id": "metaqa-2hop-179", "question": "who are the directors of the movies written by ent_354210", "start": "ns:ent_354210", "answer": "ns:ent_927675", "hops": 2}
+{"id": "metaqa-2hop-199", "question": "the films directed by ent_109898 starred which ent_863937", "start": "ns:ent_109898", "answer": "ns:ent_806606", "hops": 2}
+{"id": "metaqa-2hop-92", "question": "which films share the same ent_049168 of ent_078701", "start": "ns:ent_078701", "answer": "ns:ent_712131", "hops": 2}
+{"id": "metaqa-2hop-56", "question": "what genres are the films written by ent_879725 in", "start": "ns:ent_879725", "answer": "ns:ent_308721", "hops": 2}
+{"id": "metaqa-2hop-184", "question": "what are the movies that have the same actor of ent_567358", "start": "ns:ent_567358", "answer": "ns:ent_351760", "hops": 2}
+{"id": "metaqa-2hop-130", "question": "what types are the films directed by ent_229772", "start": "ns:ent_229772", "answer": "ns:ent_139816", "hops": 2}
+{"id": "metaqa-2hop-126", "question": "who are the ent_208061 of the movies directed by ent_430247", "start": "ns:ent_430247", "answer": "ns:ent_195868", "hops": 2}
+{"id": "metaqa-2hop-23", "question": "what were the release years of the movies written by ent_709794", "start": "ns:ent_709794", "answer": "ns:ent_330776", "hops": 2}
+{"id": "metaqa-2hop-12", "question": "who is listed as ent_049168 of ent_128914 written movies", "start": "ns:ent_128914", "answer": "ns:ent_442320", "hops": 2}
+{"id": "metaqa-2hop-28", "question": "which person wrote the films directed by ent_546619", "start": "ns:ent_546619", "answer": "ns:ent_565200", "hops": 2}
+{"id": "metaqa-2hop-39", "question": "what genres are the movies acted by ent_264236 in", "start": "ns:ent_264236", "answer": "ns:ent_308721", "hops": 2}
+{"id": "metaqa-2hop-160", "question": "who are co-stars of ent_860616", "start": "ns:ent_860616", "answer": "ns:ent_243529", "hops": 2}
+{"id": "metaqa-2hop-40", "question": "what were the release dates of ent_243974 directed movies", "start": "ns:ent_243974", "answer": "ns:ent_713536", "hops": 2}
+{"id": "metaqa-2hop-108", "question": "what are the films that have the same screenwriter of ent_390191", "start": "ns:ent_390191", "answer": "ns:ent_479374", "hops": 2}
+{"id": "metaqa-2hop-152", "question": "the films directed by ent_480419 were in which genres", "start": "ns:ent_480419", "answer": "ns:ent_684026", "hops": 2}
+{"id": "metaqa-2hop-197", "question": "what are the primary languages in the movies acted by ent_019011", "start": "ns:ent_019011", "answer": "ns:ent_700015", "hops": 2}
+{"id": "metaqa-2hop-98", "question": "what are the genres of the movies acted by ent_645543", "start": "ns:ent_645543", "answer": "ns:ent_526806", "hops": 2}
+{"id": "metaqa-2hop-97", "question": "who are ent_195740 co-ent_208061 of ent_855653", "start": "ns:ent_855653", "answer": "ns:ent_121828", "hops": 2}
+{"id": "metaqa-2hop-163", "question": "what genres are the films acted by ent_353487 in", "start": "ns:ent_353487", "answer": "ns:ent_139816", "hops": 2}
+{"id": "metaqa-2hop-119", "question": "when did the films written by ent_204261 release", "start": "ns:ent_204261", "answer": "ns:ent_792495", "hops": 2}
+{"id": "metaqa-2hop-135", "question": "the films directed by ent_809399 were written by who", "start": "ns:ent_809399", "answer": "ns:ent_529103", "hops": 2}
+{"id": "metaqa-2hop-64", "question": "when were the movies written by ent_022097 released", "start": "ns:ent_022097", "answer": "ns:ent_752787", "hops": 2}
+{"id": "metaqa-2hop-141", "question": "what genres do the movies directed by ent_197101 fall under", "start": "ns:ent_197101", "answer": "ns:ent_884027", "hops": 2}
+{"id": "metaqa-2hop-2", "question": "the screenwriter of ent_897097 also wrote which movies", "start": "ns:ent_897097", "answer": "ns:ent_062283", "hops": 2}
+{"id": "metaqa-2hop-29", "question": "what genres are the films written by ent_901717 in", "start": "ns:ent_901717", "answer": "ns:ent_884027", "hops": 2}
+{"id": "metaqa-2hop-181", "question": "which screenwriters co-wrote films with ent_499779", "start": "ns:ent_499779", "answer": "ns:ent_854517", "hops": 2}
+{"id": "metaqa-2hop-198", "question": "when did the movies directed by ent_914336 release", "start": "ns:ent_914336", "answer": "ns:ent_534277", "hops": 2}
+{"id": "metaqa-2hop-87", "question": "which films share the screenwriter with ent_867176", "start": "ns:ent_867176", "answer": "ns:ent_885194", "hops": 2}
+{"id": "metaqa-2hop-168", "question": "the screenwriter ent_393605 wrote films together with who", "start": "ns:ent_393605", "answer": "ns:ent_889208", "hops": 2}
+{"id": "metaqa-2hop-75", "question": "who are the directors of the films written by ent_838373", "start": "ns:ent_838373", "answer": "ns:ent_493357", "hops": 2}
+{"id": "metaqa-2hop-111", "question": "what were the release dates of ent_728579 written films", "start": "ns:ent_728579", "answer": "ns:ent_792495", "hops": 2}
+{"id": "metaqa-2hop-165", "question": "what genres do the movies written by ent_892744 fall under", "start": "ns:ent_892744", "answer": "ns:ent_884027", "hops": 2}
+{"id": "metaqa-2hop-116", "question": "when were the movies written by ent_680950 released", "start": "ns:ent_680950", "answer": "ns:ent_844151", "hops": 2}
+{"id": "metaqa-2hop-0", "question": "who is listed as screenwriter of ent_949391 directed films", "start": "ns:ent_949391", "answer": "ns:ent_700183", "hops": 2}
+{"id": "metaqa-2hop-180", "question": "the films acted by ent_233250 were in which genres", "start": "ns:ent_233250", "answer": "ns:ent_884027", "hops": 2}
+{"id": "metaqa-2hop-128", "question": "the films acted by ent_312937 were in which languages", "start": "ns:ent_312937", "answer": "ns:ent_118661", "hops": 2}
+{"id": "metaqa-2hop-45", "question": "the screenwriter ent_316232 co-wrote films with who", "start": "ns:ent_316232", "answer": "ns:ent_133751", "hops": 2}
+{"id": "metaqa-2hop-129", "question": "what were the release years of the movies directed by ent_735203", "start": "ns:ent_735203", "answer": "ns:ent_588637", "hops": 2}
+{"id": "metaqa-2hop-27", "question": "the films written by ent_982736 were released in which years", "start": "ns:ent_982736", "answer": "ns:ent_145051", "hops": 2}
+{"id": "metaqa-2hop-76", "question": "what are the genres of the films written by ent_296788", "start": "ns:ent_296788", "answer": "ns:ent_308721", "hops": 2}
+{"id": "metaqa-2hop-140", "question": "what are the main languages in ent_171993 written films", "start": "ns:ent_171993", "answer": "ns:ent_761221", "hops": 2}
+{"id": "metaqa-2hop-50", "question": "which movies share the same ent_049168 of ent_597091", "start": "ns:ent_597091", "answer": "ns:ent_360517", "hops": 2}
+{"id": "metaqa-2hop-191", "question": "who directed the films starred by ent_288840", "start": "ns:ent_288840", "answer": "ns:ent_378411", "hops": 2}
+{"id": "metaqa-2hop-95", "question": "what are the languages spoken in the movies directed by ent_010632", "start": "ns:ent_010632", "answer": "ns:ent_118661", "hops": 2}
+{"id": "metaqa-2hop-41", "question": "what genres do the films written by ent_731844 fall under", "start": "ns:ent_731844", "answer": "ns:ent_884027", "hops": 2}
+{"id": "metaqa-2hop-144", "question": "what genres do the films directed by ent_285566 fall under", "start": "ns:ent_285566", "answer": "ns:ent_308721", "hops": 2}
+{"id": "metaqa-2hop-82", "question": "what are the genres of the films starred by ent_724146", "start": "ns:ent_724146", "answer": "ns:ent_884027", "hops": 2}
+{"id": "metaqa-2hop-125", "question": "which person directed the films acted by ent_836274", "start": "ns:ent_836274", "answer": "ns:ent_335812", "hops": 2}
+{"id": "metaqa-2hop-4", "question": "which person directed the films acted by ent_143028", "start": "ns:ent_143028", "answer": "ns:ent_508473", "hops": 2}
+{"id": "metaqa-2hop-177", "question": "what genres do the films written by ent_328387 fall under", "start": "ns:ent_328387", "answer": "ns:ent_308721", "hops": 2}
+{"id": "metaqa-2hop-175", "question": "what types are the movies written by ent_003425", "start": "ns:ent_003425", "answer": "ns:ent_884027", "hops": 2}
+{"id": "metaqa-2hop-112", "question": "what are the movies that are directed by the same ent_049168 of ent_642693", "start": "ns:ent_642693", "answer": "ns:ent_879908", "hops": 2}
+{"id": "metaqa-2hop-106", "question": "what were the release dates of ent_274864 written films", "start": "ns:ent_274864", "answer": "ns:ent_275504", "hops": 2}
+{"id": "metaqa-2hop-103", "question": "what were the release dates of ent_457485 written movies", "start": "ns:ent_457485", "answer": "ns:ent_146413", "hops": 2}
+{"id": "metaqa-2hop-157", "question": "who is listed as ent_049168 of ent_218209 written films", "start": "ns:ent_218209", "answer": "ns:ent_844657", "hops": 2}
+{"id": "metaqa-2hop-30", "question": "the movies directed by ent_705676 were in which genres", "start": "ns:ent_705676", "answer": "ns:ent_614560", "hops": 2}
+{"id": "metaqa-2hop-7", "question": "when were the films written by ent_603717 released", "start": "ns:ent_603717", "answer": "ns:ent_517488", "hops": 2}
+{"id": "metaqa-2hop-122", "question": "what are the main languages in ent_585176 written films", "start": "ns:ent_585176", "answer": "ns:ent_787009", "hops": 2}
+{"id": "metaqa-2hop-171", "question": "who wrote movies together with ent_545027", "start": "ns:ent_545027", "answer": "ns:ent_099326", "hops": 2}
+{"id": "metaqa-2hop-72", "question": "what genres do the films directed by ent_648543 fall under", "start": "ns:ent_648543", "answer": "ns:ent_308721", "hops": 2}
+{"id": "metaqa-2hop-10", "question": "what are the languages spoken in the films starred by ent_151642", "start": "ns:ent_151642", "answer": "ns:ent_754121", "hops": 2}
+{"id": "metaqa-2hop-187", "question": "the screenwriter ent_620148 wrote films together with who", "start": "ns:ent_620148", "answer": "ns:ent_949115", "hops": 2}
+{"id": "metaqa-2hop-93", "question": "when were the films written by ent_177409 released", "start": "ns:ent_177409", "answer": "ns:ent_534277", "hops": 2}
+{"id": "metaqa-2hop-62", "question": "who wrote the movies directed by ent_373323", "start": "ns:ent_373323", "answer": "ns:ent_148407", "hops": 2}
+{"id": "metaqa-2hop-104", "question": "what were the release years the films written by ent_423325", "start": "ns:ent_423325", "answer": "ns:ent_330776", "hops": 2}
+{"id": "metaqa-2hop-8", "question": "who wrote the movies directed by ent_126460", "start": "ns:ent_126460", "answer": "ns:ent_222675", "hops": 2}
+{"id": "metaqa-2hop-166", "question": "the films acted by ent_890668 were directed by who", "start": "ns:ent_890668", "answer": "ns:ent_117683", "hops": 2}
+{"id": "metaqa-2hop-151", "question": "who directed the movies acted by ent_846769", "start": "ns:ent_846769", "answer": "ns:ent_940142", "hops": 2}
+{"id": "metaqa-2hop-161", "question": "what are the main languages in ent_114499 directed movies", "start": "ns:ent_114499", "answer": "ns:ent_700015", "hops": 2}
+{"id": "metaqa-2hop-162", "question": "who are ent_195740 co-directors of ent_144789", "start": "ns:ent_144789", "answer": "ns:ent_208936", "hops": 2}
+{"id": "metaqa-2hop-188", "question": "what were the release dates of ent_994795 acted films", "start": "ns:ent_994795", "answer": "ns:ent_442666", "hops": 2}
+{"id": "metaqa-2hop-84", "question": "the movies directed by ent_381242 were written by who", "start": "ns:ent_381242", "answer": "ns:ent_251165", "hops": 2}
+{"id": "metaqa-2hop-60", "question": "what genres do the films directed by ent_323066 fall under", "start": "ns:ent_323066", "answer": "ns:ent_526806", "hops": 2}
+{"id": "metaqa-2hop-70", "question": "who are the directors of the films starred by ent_274492", "start": "ns:ent_274492", "answer": "ns:ent_829035", "hops": 2}
+{"id": "metaqa-2hop-21", "question": "the movies written by ent_945439 were released in which years", "start": "ns:ent_945439", "answer": "ns:ent_902931", "hops": 2}
+{"id": "metaqa-2hop-33", "question": "the films written by ent_835297 were released in which years", "start": "ns:ent_835297", "answer": "ns:ent_687277", "hops": 2}
+{"id": "metaqa-2hop-182", "question": "which movies have the same screenwriter of ent_180564", "start": "ns:ent_180564", "answer": "ns:ent_354508", "hops": 2}
+{"id": "metaqa-2hop-77", "question": "the films directed by ent_785242 were in which languages", "start": "ns:ent_785242", "answer": "ns:ent_700015", "hops": 2}
+{"id": "metaqa-3hop-108", "question": "what are the languages spoken in the movies whose ent_863937 also appear in ent_924386", "start": "ns:ent_924386", "answer": "ns:ent_008248", "hops": 3}
+{"id": "metaqa-3hop-54", "question": "when did the movies release whose directors also directed ent_396065", "start": "ns:ent_396065", "answer": "ns:ent_442666", "hops": 3}
+{"id": "metaqa-3hop-138", "question": "what are the languages spoken in the films directed by the ent_343274 ent_049168", "start": "ns:ent_343274", "answer": "ns:ent_118661", "hops": 3}
+{"id": "metaqa-3hop-193", "question": "the movies that share ent_208061 with the movie ent_174283 were in which languages", "start": "ns:ent_174283", "answer": "ns:ent_008248", "hops": 3}
+{"id": "metaqa-3hop-186", "question": "what were the release dates of films written by the screenwriter of ent_240355", "start": "ns:ent_240355", "answer": "ns:ent_713536", "hops": 3}
+{"id": "metaqa-3hop-176", "question": "what genres do the movies that share directors with ent_592688 fall under", "start": "ns:ent_592688", "answer": "ns:ent_139816", "hops": 3}
+{"id": "metaqa-3hop-51", "question": "what languages are the films that share directors with ent_144464 in", "start": "ns:ent_144464", "answer": "ns:ent_661084", "hops": 3}
+{"id": "metaqa-3hop-182", "question": "what languages are the movies that share screenwriters with ent_434577 in", "start": "ns:ent_434577", "answer": "ns:ent_118661", "hops": 3}
+{"id": "metaqa-3hop-79", "question": "what are the languages spoken in the movies starred by ent_968424 ent_863937", "start": "ns:ent_968424", "answer": "ns:ent_118661", "hops": 3}
+{"id": "metaqa-3hop-102", "question": "what genres are the films directed by the ent_043926 ent_049168", "start": "ns:ent_043926", "answer": "ns:ent_884027", "hops": 3}
+{"id": "metaqa-3hop-171", "question": "who are the screenwriters that the directors of their movies also directed ent_989533", "start": "ns:ent_989533", "answer": "ns:ent_532587", "hops": 3}
+{"id": "metaqa-3hop-166", "question": "who directed films that share ent_863937 with the ent_195740 ent_541269", "start": "ns:ent_541269", "answer": "ns:ent_589756", "hops": 3}
+{"id": "metaqa-3hop-95", "question": "what are the genres of the films whose screenwriters also wrote ent_021507", "start": "ns:ent_021507", "answer": "ns:ent_308721", "hops": 3}
+{"id": "metaqa-3hop-112", "question": "who are the ent_208061 that the ent_863937 in their films also appear in the ent_195740 ent_263319", "start": "ns:ent_263319", "answer": "ns:ent_049167", "hops": 3}
+{"id": "metaqa-3hop-132", "question": "what are the primary languages in the movies directed by the ent_049168 of ent_935232", "start": "ns:ent_935232", "answer": "ns:ent_118661", "hops": 3}
+{"id": "metaqa-3hop-115", "question": "when did the movies starred by ent_846705 ent_863937 release", "start": "ns:ent_846705", "answer": "ns:ent_442666", "hops": 3}
+{"id": "metaqa-3hop-30", "question": "the films that share ent_208061 with the ent_195740 ent_139850 were in which genres", "start": "ns:ent_139850", "answer": "ns:ent_884027", "hops": 3}
+{"id": "metaqa-3hop-63", "question": "who are the ent_208061 that the directors of their films also directed ent_496984", "start": "ns:ent_496984", "answer": "ns:ent_622871", "hops": 3}
+{"id": "metaqa-3hop-57", "question": "what were the release dates of films directed by the ent_049168 of ent_077009", "start": "ns:ent_077009", "answer": "ns:ent_258607", "hops": 3}
+{"id": "metaqa-3hop-16", "question": "what genres do the movies that share directors with ent_030955 fall under", "start": "ns:ent_030955", "answer": "ns:ent_139816", "hops": 3}
+{"id": "metaqa-3hop-86", "question": "what genres do the films that share ent_208061 with ent_656971 fall under", "start": "ns:ent_656971", "answer": "ns:ent_922682", "hops": 3}
+{"id": "metaqa-3hop-5", "question": "what genres do the films that share ent_208061 with ent_928775 fall under", "start": "ns:ent_928775", "answer": "ns:ent_317661", "hops": 3}
+{"id": "metaqa-3hop-150", "question": "what languages are the films that share directors with ent_174174 in", "start": "ns:ent_174174", "answer": "ns:ent_118661", "hops": 3}
+{"id": "metaqa-3hop-141", "question": "what types are the movies written by the ent_158511 of ent_657246", "start": "ns:ent_657246", "answer": "ns:ent_884027", "hops": 3}
+{"id": "metaqa-3hop-58", "question": "what are the languages spoken in the movies starred by ent_539704 ent_863937", "start": "ns:ent_539704", "answer": "ns:ent_700015", "hops": 3}
+{"id": "metaqa-3hop-177", "question": "the films that share ent_208061 with the ent_195740 ent_848400 were in which genres", "start": "ns:ent_848400", "answer": "ns:ent_308721", "hops": 3}
+{"id": "metaqa-3hop-56", "question": "when did the films release whose screenwriters also wrote ent_724174", "start": "ns:ent_724174", "answer": "ns:ent_418801", "hops": 3}
+{"id": "metaqa-3hop-1", "question": "what are the languages spoken in the films whose directors also directed ent_448915", "start": "ns:ent_448915", "answer": "ns:ent_272207", "hops": 3}
+{"id": "metaqa-3hop-18", "question": "who are the directors of movies whose ent_208061 also wrote ent_138471", "start": "ns:ent_138471", "answer": "ns:ent_174195", "hops": 3}
+{"id": "metaqa-3hop-161", "question": "what are the languages spoken in the movies directed by the ent_855932 ent_049168", "start": "ns:ent_855932", "answer": "ns:ent_156147", "hops": 3}
+{"id": "metaqa-3hop-15", "question": "what are the languages spoken in the films whose directors also directed ent_198298", "start": "ns:ent_198298", "answer": "ns:ent_118661", "hops": 3}
+{"id": "metaqa-3hop-175", "question": "when did the movies directed by the ent_951312 ent_049168 release", "start": "ns:ent_951312", "answer": "ns:ent_277746", "hops": 3}
+{"id": "metaqa-3hop-17", "question": "what are the languages spoken in the films starred by ent_143184 ent_863937", "start": "ns:ent_143184", "answer": "ns:ent_118661", "hops": 3}
+{"id": "metaqa-3hop-8", "question": "what are the languages spoken in the movies whose ent_208061 also wrote ent_279473", "start": "ns:ent_279473", "answer": "ns:ent_346620", "hops": 3}
+{"id": "metaqa-3hop-84", "question": "who starred in the movies whose ent_049168 also directed ent_372311", "start": "ns:ent_372311", "answer": "ns:ent_764649", "hops": 3}
+{"id": "metaqa-3hop-189", "question": "the films that share directors with the ent_195740 ent_182657 were released in which years", "start": "ns:ent_182657", "answer": "ns:ent_258607", "hops": 3}
+{"id": "metaqa-3hop-131", "question": "the movies that share ent_863937 with the movie ent_621908 were in which languages", "start": "ns:ent_621908", "answer": "ns:ent_008248", "hops": 3}
+{"id": "metaqa-3hop-60", "question": "who directed the films written by the ent_158511 of ent_670532", "start": "ns:ent_670532", "answer": "ns:ent_925473", "hops": 3}
+{"id": "metaqa-3hop-71", "question": "what genres do the films that share directors with ent_235421 fall under", "start": "ns:ent_235421", "answer": "ns:ent_308721", "hops": 3}
+{"id": "metaqa-3hop-124", "question": "what languages are the movies that share ent_863937 with ent_474040 in", "start": "ns:ent_474040", "answer": "ns:ent_025599", "hops": 3}
+{"id": "metaqa-3hop-198", "question": "who directed films for the ent_158511 of ent_549999", "start": "ns:ent_549999", "answer": "ns:ent_214178", "hops": 3}
+{"id": "metaqa-3hop-197", "question": "who are the ent_863937 in the films directed by the ent_049168 of ent_901238", "start": "ns:ent_901238", "answer": "ns:ent_176264", "hops": 3}
+{"id": "metaqa-3hop-33", "question": "who are the ent_208061 that the directors of their films also directed ent_027537", "start": "ns:ent_027537", "answer": "ns:ent_521919", "hops": 3}
+{"id": "metaqa-3hop-146", "question": "the movies that share screenwriters with the movie ent_668159 were in which languages", "start": "ns:ent_668159", "answer": "ns:ent_787009", "hops": 3}
+{"id": "metaqa-3hop-147", "question": "when did the films release whose screenwriters also wrote ent_048675", "start": "ns:ent_048675", "answer": "ns:ent_049405", "hops": 3}
+{"id": "metaqa-3hop-121", "question": "the films that share directors with the ent_195740 ent_378108 were in which genres", "start": "ns:ent_378108", "answer": "ns:ent_884027", "hops": 3}
+{"id": "metaqa-3hop-62", "question": "what were the release dates of films directed by the ent_049168 of ent_642693", "start": "ns:ent_642693", "answer": "ns:ent_167753", "hops": 3}
+{"id": "metaqa-3hop-154", "question": "what are the primary languages in the movies directed by the ent_049168 of ent_949943", "start": "ns:ent_949943", "answer": "ns:ent_700015", "hops": 3}
+{"id": "metaqa-3hop-104", "question": "what are the primary languages in the movies written by the ent_158511 of ent_581061", "start": "ns:ent_581061", "answer": "ns:ent_025599", "hops": 3}
+{"id": "metaqa-3hop-48", "question": "what types are the movies directed by the ent_049168 of ent_559705", "start": "ns:ent_559705", "answer": "ns:ent_922682", "hops": 3}
+{"id": "metaqa-3hop-24", "question": "when did the movies written by ent_349975 ent_208061 release", "start": "ns:ent_349975", "answer": "ns:ent_713536", "hops": 3}
+{"id": "metaqa-3hop-149", "question": "the films that share directors with the films ent_161447 are written by who", "start": "ns:ent_161447", "answer": "ns:ent_144207", "hops": 3}
+{"id": "metaqa-3hop-110", "question": "when did the films starred by ent_168746 ent_863937 release", "start": "ns:ent_168746", "answer": "ns:ent_713536", "hops": 3}
+{"id": "metaqa-3hop-90", "question": "what are the languages spoken in the films directed by the ent_439010 ent_049168", "start": "ns:ent_439010", "answer": "ns:ent_761221", "hops": 3}
+{"id": "metaqa-3hop-199", "question": "what are the primary languages in the movies starred by ent_863937 in ent_893829", "start": "ns:ent_893829", "answer": "ns:ent_787009", "hops": 3}
+{"id": "metaqa-3hop-105", "question": "what genres are the films directed by the ent_530358 ent_049168", "start": "ns:ent_530358", "answer": "ns:ent_308721", "hops": 3}
+{"id": "metaqa-3hop-119", "question": "what are the languages spoken in the films written by ent_103264 screenwriters", "start": "ns:ent_103264", "answer": "ns:ent_118661", "hops": 3}
+{"id": "metaqa-3hop-13", "question": "who directed films for the ent_158511 of ent_663686", "start": "ns:ent_663686", "answer": "ns:ent_603587", "hops": 3}
+{"id": "metaqa-3hop-25", "question": "what are the languages spoken in the films whose ent_863937 also appear in ent_594093", "start": "ns:ent_594093", "answer": "ns:ent_787009", "hops": 3}
+{"id": "metaqa-3hop-169", "question": "the films that share directors with the ent_195740 ent_203496 were in which genres", "start": "ns:ent_203496", "answer": "ns:ent_922682", "hops": 3}
+{"id": "metaqa-3hop-103", "question": "the movies that share directors with the movie ent_891648 were in which languages", "start": "ns:ent_891648", "answer": "ns:ent_156147", "hops": 3}
+{"id": "metaqa-3hop-179", "question": "what are the languages spoken in the films written by ent_325346 screenwriters", "start": "ns:ent_325346", "answer": "ns:ent_008248", "hops": 3}
+{"id": "metaqa-3hop-27", "question": "when did the films release whose screenwriters also wrote ent_057030", "start": "ns:ent_057030", "answer": "ns:ent_713536", "hops": 3}
+{"id": "metaqa-3hop-192", "question": "what are the languages spoken in the movies whose directors also directed ent_655425", "start": "ns:ent_655425", "answer": "ns:ent_156147", "hops": 3}
+{"id": "metaqa-3hop-49", "question": "what are the genres of the films whose directors also directed ent_587783", "start": "ns:ent_587783", "answer": "ns:ent_161223", "hops": 3}
+{"id": "metaqa-3hop-174", "question": "what were the release dates of movies written by the ent_158511 of ent_177735", "start": "ns:ent_177735", "answer": "ns:ent_792495", "hops": 3}
+{"id": "metaqa-3hop-114", "question": "the movies directed by the ent_049168 of ent_126349 starred who", "start": "ns:ent_126349", "answer": "ns:ent_729891", "hops": 3}
+{"id": "metaqa-3hop-35", "question": "what genres are the movies directed by the ent_529663 ent_049168", "start": "ns:ent_529663", "answer": "ns:ent_308721", "hops": 3}
+{"id": "metaqa-3hop-145", "question": "the movies directed by the ent_049168 of ent_550560 starred who", "start": "ns:ent_550560", "answer": "ns:ent_622076", "hops": 3}
+{"id": "metaqa-3hop-46", "question": "what are the languages spoken in the movies directed by the ent_780900 ent_049168", "start": "ns:ent_780900", "answer": "ns:ent_787009", "hops": 3}
+{"id": "metaqa-3hop-170", "question": "which person wrote the movies starred by the ent_863937 in ent_530829", "start": "ns:ent_530829", "answer": "ns:ent_123025", "hops": 3}
+{"id": "metaqa-3hop-118", "question": "when did the movies directed by the ent_288389 ent_049168 release", "start": "ns:ent_288389", "answer": "ns:ent_657924", "hops": 3}
+{"id": "metaqa-3hop-136", "question": "who directed movies for the ent_158511 of ent_500695", "start": "ns:ent_500695", "answer": "ns:ent_893021", "hops": 3}
+{"id": "metaqa-3hop-111", "question": "the films that share directors with the ent_195740 ent_158366 were in which languages", "start": "ns:ent_158366", "answer": "ns:ent_008248", "hops": 3}
+{"id": "metaqa-3hop-128", "question": "when did the movies release whose ent_208061 also wrote ent_124413", "start": "ns:ent_124413", "answer": "ns:ent_830555", "hops": 3}
+{"id": "metaqa-3hop-9", "question": "who directed the films written by the ent_158511 of ent_311185", "start": "ns:ent_311185", "answer": "ns:ent_448945", "hops": 3}
+{"id": "metaqa-3hop-173", "question": "when did the movies starred by ent_943581 ent_863937 release", "start": "ns:ent_943581", "answer": "ns:ent_095325", "hops": 3}
+{"id": "metaqa-3hop-139", "question": "the films that share ent_863937 with the ent_195740 ent_578866 were in which languages", "start": "ns:ent_578866", "answer": "ns:ent_700015", "hops": 3}
+{"id": "metaqa-3hop-155", "question": "what are the languages spoken in the movies directed by the ent_232196 ent_049168", "start": "ns:ent_232196", "answer": "ns:ent_097923", "hops": 3}
+{"id": "metaqa-3hop-109", "question": "who is listed as ent_049168 of the movies starred by ent_343856 ent_863937", "start": "ns:ent_343856", "answer": "ns:ent_605991", "hops": 3}
+{"id": "metaqa-3hop-70", "question": "the movies that share ent_863937 with the movie ent_443143 were in which languages", "start": "ns:ent_443143", "answer": "ns:ent_700015", "hops": 3}
+{"id": "metaqa-3hop-12", "question": "what are the primary languages in the movies starred by ent_863937 in ent_789221", "start": "ns:ent_789221", "answer": "ns:ent_700015", "hops": 3}
+{"id": "metaqa-3hop-6", "question": "what are the languages spoken in the movies written by ent_967242 ent_208061", "start": "ns:ent_967242", "answer": "ns:ent_118661", "hops": 3}
+{"id": "metaqa-3hop-83", "question": "which person directed the films acted by the ent_863937 in ent_964307", "start": "ns:ent_964307", "answer": "ns:ent_485046", "hops": 3}
+{"id": "metaqa-3hop-69", "question": "what languages are the movies that share screenwriters with ent_707900 in", "start": "ns:ent_707900", "answer": "ns:ent_118661", "hops": 3}
+{"id": "metaqa-3hop-107", "question": "who is listed as screenwriter of the movies starred by ent_175329 ent_863937", "start": "ns:ent_175329", "answer": "ns:ent_222155", "hops": 3}
+{"id": "metaqa-3hop-172", "question": "what types are the movies written by the ent_158511 of ent_481395", "start": "ns:ent_481395", "answer": "ns:ent_884027", "hops": 3}
+{"id": "metaqa-3hop-11", "question": "what genres are the movies directed by the ent_071551 ent_049168", "start": "ns:ent_071551", "answer": "ns:ent_884027", "hops": 3}
+{"id": "metaqa-3hop-96", "question": "who are the directors of movies whose ent_208061 also wrote ent_283275", "start": "ns:ent_283275", "answer": "ns:ent_620995", "hops": 3}
+{"id": "metaqa-3hop-163", "question": "who are the directors of films whose ent_208061 also wrote ent_577759", "start": "ns:ent_577759", "answer": "ns:ent_538857", "hops": 3}
+{"id": "metaqa-3hop-183", "question": "who is listed as screenwriter of the movies starred by ent_967082 ent_863937", "start": "ns:ent_967082", "answer": "ns:ent_514266", "hops": 3}
+{"id": "metaqa-3hop-21", "question": "the movies written by the screenwriter of ent_480412 were directed by who", "start": "ns:ent_480412", "answer": "ns:ent_496672", "hops": 3}
+{"id": "metaqa-3hop-52", "question": "what genres do the movies that share directors with ent_054067 fall under", "start": "ns:ent_054067", "answer": "ns:ent_562309", "hops": 3}
+{"id": "metaqa-3hop-153", "question": "who directed films for the ent_158511 of ent_556921", "start": "ns:ent_556921", "answer": "ns:ent_097466", "hops": 3}
+{"id": "metaqa-3hop-61", "question": "what are the languages spoken in the films written by ent_113668 screenwriters", "start": "ns:ent_113668", "answer": "ns:ent_660035", "hops": 3}
+{"id": "metaqa-3hop-137", "question": "what are the languages spoken in the films written by ent_914476 screenwriters", "start": "ns:ent_914476", "answer": "ns:ent_700015", "hops": 3}
+{"id": "metaqa-3hop-196", "question": "what are the primary languages in the movies directed by the ent_049168 of ent_934395", "start": "ns:ent_934395", "answer": "ns:ent_118661", "hops": 3}
+{"id": "metaqa-3hop-7", "question": "what are the genres of the films whose directors also directed ent_288292", "start": "ns:ent_288292", "answer": "ns:ent_308721", "hops": 3}
+{"id": "metaqa-3hop-152", "question": "what types are the movies directed by the ent_049168 of ent_062538", "start": "ns:ent_062538", "answer": "ns:ent_308721", "hops": 3}
+{"id": "metaqa-3hop-134", "question": "what were the release dates of movies directed by the ent_049168 of ent_147172", "start": "ns:ent_147172", "answer": "ns:ent_844151", "hops": 3}
