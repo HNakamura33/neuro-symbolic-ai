@@ -1,0 +1,9 @@
+{
+  "name": "lcb_max_free_time",
+  "category": "interval-arithmetic",
+  "bug_type": "plus-minus-one",
+  "source": "livecodebench",
+  "feasible": true,
+  "entry_point": "maxFreeTime",
+  "lcb_problem_id": "3743"
+}

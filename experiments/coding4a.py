@@ -20,6 +20,10 @@ the runner so tests can import this module offline.
 Usage:
     uv run python -m experiments.coding4a --condition plain --model sonnet \
         --limit 3 --out results/coding4a-pilot-plain.jsonl
+
+    # hand-crafted boundary-bug suite (bugsuite/README.md) instead of QuixBugs
+    uv run python -m experiments.coding4a --condition plain --model sonnet \
+        --suite bugsuite --out results/coding4a-bugsuite-plain.jsonl
 """
 
 from __future__ import annotations
@@ -88,6 +92,28 @@ def list_programs(quixbugs: Path) -> list[str]:
     for tc in sorted((quixbugs / "json_testcases").glob("*.json")):
         if (quixbugs / "python_programs" / f"{tc.stem}.py").exists():
             names.append(tc.stem)
+    return names
+
+
+def build_suite_view(suite: Path, dest: Path) -> list[str]:
+    """Materialize a bugsuite directory (bugsuite/README.md) as a
+    QuixBugs-layout tree under dest, so the rest of this module works on it
+    unchanged. Programs are named by their meta.json entry_point; infeasible
+    variants (実験4c material) are skipped. Returns the program names."""
+    for sub in ("python_programs", "correct_python_programs", "json_testcases"):
+        (dest / sub).mkdir(parents=True, exist_ok=True)
+    names = []
+    for meta_file in sorted(suite.glob("*/meta.json")):
+        meta = json.loads(meta_file.read_text(encoding="utf-8"))
+        if not meta.get("feasible", True):
+            continue
+        name = meta["entry_point"]
+        task_dir = meta_file.parent
+        shutil.copy(task_dir / "buggy.py", dest / "python_programs" / f"{name}.py")
+        shutil.copy(task_dir / "correct.py",
+                    dest / "correct_python_programs" / f"{name}.py")
+        shutil.copy(task_dir / "cases.json", dest / "json_testcases" / f"{name}.json")
+        names.append(name)
     return names
 
 
@@ -337,7 +363,15 @@ def main() -> None:
     ap.add_argument("--out", type=Path, required=True, help="Results JSONL (appended)")
     ap.add_argument("--quixbugs", type=Path, default=DEFAULT_QUIXBUGS,
                     help="Path to a QuixBugs checkout")
+    ap.add_argument("--suite", type=Path, default=None,
+                    help="Path to a bugsuite directory (bugsuite/README.md); "
+                         "overrides --quixbugs via a QuixBugs-layout temp view")
     args = ap.parse_args()
+
+    if args.suite:
+        view = Path(tempfile.mkdtemp(prefix="bugsuite_view_"))
+        build_suite_view(args.suite, view)
+        args.quixbugs = view
 
     if args.programs:
         programs = [p.strip() for p in args.programs.split(",") if p.strip()]

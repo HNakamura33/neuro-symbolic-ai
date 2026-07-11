@@ -1,0 +1,9 @@
+{
+  "name": "lcb_max_containers",
+  "category": "rounding",
+  "bug_type": "wrong-rounding-mode",
+  "source": "livecodebench",
+  "feasible": true,
+  "entry_point": "maxContainers",
+  "lcb_problem_id": "3817"
+}

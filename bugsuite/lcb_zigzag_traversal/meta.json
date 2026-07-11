@@ -1,0 +1,9 @@
+{
+  "name": "lcb_zigzag_traversal",
+  "category": "pagination",
+  "bug_type": "off-by-one",
+  "source": "livecodebench",
+  "feasible": true,
+  "entry_point": "zigzagTraversal",
+  "lcb_problem_id": "3708"
+}

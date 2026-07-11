@@ -1,0 +1,8 @@
+{
+  "name": "next_day",
+  "category": "date-handling",
+  "bug_type": "comparison-operator",
+  "source": "handwritten",
+  "feasible": true,
+  "entry_point": "next_day"
+}

@@ -1,0 +1,8 @@
+{
+  "name": "seconds_to_minutes",
+  "category": "rounding",
+  "bug_type": "plus-minus-one",
+  "source": "handwritten",
+  "feasible": true,
+  "entry_point": "seconds_to_minutes"
+}

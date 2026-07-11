@@ -13,6 +13,12 @@ _SAFE_GLOBALS = {"__builtins__": {}, "abs": abs, "min": min, "max": max, "len": 
 
 MAX_SOLUTIONS = 20
 
+#: Refuse problems whose raw search space exceeds this many assignments.
+#: python-constraint enumerates in-process with no interrupt point, and the
+#: MCP server shares the agent's event loop — an oversized product of domain
+#: sizes would wedge the session (same failure mode as an unbounded Z3 call).
+MAX_SEARCH_SPACE = 5_000_000
+
 
 def solve_csp(
     variables: dict[str, list],
@@ -30,10 +36,19 @@ def solve_csp(
     Returns:
         {"solutions": [...], "count": n, "truncated": bool}
     """
-    problem = Problem()
+    space = 1
     for name, domain in variables.items():
         if not domain:
             return {"error": f"variable '{name}' has an empty domain"}
+        space *= len(domain)
+    if space > MAX_SEARCH_SPACE:
+        return {"error": (
+            f"search space of {space:,} assignments exceeds the "
+            f"{MAX_SEARCH_SPACE:,} limit; shrink the domains or split the problem"
+        )}
+
+    problem = Problem()
+    for name, domain in variables.items():
         problem.addVariable(name, domain)
 
     if all_different:

@@ -1,0 +1,8 @@
+{
+  "name": "intervals_overlap",
+  "category": "interval-arithmetic",
+  "bug_type": "comparison-operator",
+  "source": "handwritten",
+  "feasible": true,
+  "entry_point": "intervals_overlap"
+}

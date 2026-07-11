@@ -1,0 +1,8 @@
+{
+  "name": "binary_search",
+  "category": "index-calculation",
+  "bug_type": "comparison-operator",
+  "source": "handwritten",
+  "feasible": true,
+  "entry_point": "binary_search"
+}

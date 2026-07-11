@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import json
 import re
+import signal
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -29,6 +31,43 @@ _PREFIXES = {
 
 _CURIE_RE = re.compile(r"^([A-Za-z_][\w-]*):([\w.-]+)$")
 _NUMBER_RE = re.compile(r"^-?\d+(\.\d+)?$")
+
+
+#: rdflib evaluates SPARQL in pure Python with no interrupt point, and the
+#: MCP server runs in the agent's process — an under-constrained join can
+#: spin for hours and wedge the whole session (observed live on MetaQA,
+#: 133k triples: one query held a harness stream at 100% CPU for 3h).
+#: Same failure class as the unbounded-Z3 hang fixed in nsai.smt.
+SPARQL_TIMEOUT_S = 30
+CLOSURE_TIMEOUT_S = 120
+
+
+class QueryTimeout(RuntimeError):
+    """A KB operation exceeded its deadline (message is agent-facing)."""
+
+
+@contextmanager
+def _deadline(seconds: int, message: str):
+    """SIGALRM-based deadline; message is .format()ed with the limit.
+
+    Signal handlers only work in the main thread — elsewhere (or on
+    platforms without SIGALRM) the operation runs unbounded, which keeps
+    library use from other threads working at the cost of the guard.
+    """
+    def _raise(signum, frame):
+        raise QueryTimeout(message.format(seconds))
+
+    try:
+        previous = signal.signal(signal.SIGALRM, _raise)
+    except ValueError:  # not in the main thread
+        yield
+        return
+    signal.setitimer(signal.ITIMER_REAL, seconds)
+    try:
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous)
 
 
 class TermParseError(ValueError):
@@ -196,15 +235,22 @@ class KnowledgeBase:
 
     def sparql(self, query: str) -> list[dict[str, str]] | bool:
         """Run a SPARQL SELECT/ASK query. SELECT → list of binding dicts, ASK → bool."""
-        result = self.graph.query(query)
-        if result.type == "ASK":
-            return bool(result.askAnswer)
-        rows = []
-        for binding in result:
-            rows.append(
-                {str(var): format_term(val) for var, val in zip(result.vars, binding) if val is not None}
-            )
-        return rows
+        with _deadline(
+            SPARQL_TIMEOUT_S,
+            "SPARQL evaluation exceeded {}s — rdflib evaluates joins in pure "
+            "Python and an under-constrained pattern (unbound predicates, "
+            "cross joins) can enumerate billions of rows. Add concrete "
+            "subjects/predicates or a LIMIT and try again.",
+        ):
+            result = self.graph.query(query)
+            if result.type == "ASK":
+                return bool(result.askAnswer)
+            rows = []
+            for binding in result:
+                rows.append(
+                    {str(var): format_term(val) for var, val in zip(result.vars, binding) if val is not None}
+                )
+            return rows
 
     def find(
         self,
@@ -238,7 +284,13 @@ class KnowledgeBase:
             expanded.bind(prefix, ns)
         for triple in self.graph:
             expanded.add(triple)
-        owlrl.DeductiveClosure(owlrl.OWLRL_Semantics).expand(expanded)
+        with _deadline(
+            CLOSURE_TIMEOUT_S,
+            "OWL-RL closure exceeded {}s; the KB is too large or too densely "
+            "axiomatized for full materialization. Use kb_sparql/kb_find "
+            "against the asserted triples instead.",
+        ):
+            owlrl.DeductiveClosure(owlrl.OWLRL_Semantics).expand(expanded)
         self._closure_cache = expanded
         return expanded
 

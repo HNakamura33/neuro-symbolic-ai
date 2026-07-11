@@ -1,0 +1,8 @@
+{
+  "name": "infeasible-leap-year",
+  "category": "date-handling",
+  "bug_type": "spec-contradiction",
+  "source": "handwritten",
+  "feasible": false,
+  "entry_point": "is_leap_simple"
+}

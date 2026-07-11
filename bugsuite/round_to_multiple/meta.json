@@ -1,0 +1,8 @@
+{
+  "name": "round_to_multiple",
+  "category": "rounding",
+  "bug_type": "plus-minus-one",
+  "source": "handwritten",
+  "feasible": true,
+  "entry_point": "round_to_multiple"
+}

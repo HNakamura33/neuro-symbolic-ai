@@ -1,0 +1,8 @@
+{
+  "name": "has_next_page",
+  "category": "pagination",
+  "bug_type": "comparison-operator",
+  "source": "handwritten",
+  "feasible": true,
+  "entry_point": "has_next_page"
+}

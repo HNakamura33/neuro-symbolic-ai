@@ -1,0 +1,8 @@
+{
+  "name": "ceil_div",
+  "category": "rounding",
+  "bug_type": "plus-minus-one",
+  "source": "handwritten",
+  "feasible": true,
+  "entry_point": "ceil_div"
+}

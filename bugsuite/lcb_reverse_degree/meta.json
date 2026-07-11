@@ -1,0 +1,9 @@
+{
+  "name": "lcb_reverse_degree",
+  "category": "index-calculation",
+  "bug_type": "plus-minus-one",
+  "source": "livecodebench",
+  "feasible": true,
+  "entry_point": "reverseDegree",
+  "lcb_problem_id": "3811"
+}

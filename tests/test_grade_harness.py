@@ -122,3 +122,138 @@ def test_audit_task_loading_and_prompt(tmp_path: Path):
     assert "FINAL:" in prompt and "symbolic tools" in prompt
     b1 = render_prompt(tasks[0], "audit", "B1", "ttl-content-here")
     assert "ttl-content-here" in b1
+
+
+# ---------------------------------------------------------------------------
+# B1p oracle-BFS retrieval
+# ---------------------------------------------------------------------------
+
+# Chain a -> b -> c -> d plus a hub h attached to b: BFS distances from a are
+# b=1, {c,h}=2, d=3. Five triples total.
+B1P_TTL = """\
+@prefix ns: <http://nsai.local/ns#> .
+ns:a ns:p ns:b .
+ns:b ns:p ns:c .
+ns:c ns:p ns:d .
+ns:b ns:q ns:h .
+ns:h ns:q ns:hh .
+"""
+
+
+@pytest.fixture()
+def b1p_index(tmp_path: Path):
+    from experiments.harness import load_neighborhood_index
+
+    kb = tmp_path / "kb.ttl"
+    kb.write_text(B1P_TTL, encoding="utf-8")
+    return load_neighborhood_index(kb)
+
+
+def _uri(name: str):
+    from rdflib import URIRef
+
+    return URIRef(f"http://nsai.local/ns#{name}")
+
+
+def test_neighborhood_radius_semantics(b1p_index):
+    from experiments.harness import neighborhood
+
+    triples, adj = b1p_index
+    sel1, trunc1 = neighborhood(triples, adj, _uri("a"), 1, 100)
+    assert len(sel1) == 1 and not trunc1              # only a->b
+    sel2, _ = neighborhood(triples, adj, _uri("a"), 2, 100)
+    assert len(sel2) == 3                             # + b->c, b->h
+    sel3, _ = neighborhood(triples, adj, _uri("a"), 3, 100)
+    assert len(sel3) == 5                             # whole graph
+    # Distance order: the radius-1 triple always precedes radius-2 ones.
+    assert sel2[0] == sel1[0]
+
+
+def test_neighborhood_truncation_keeps_closest(b1p_index):
+    from experiments.harness import neighborhood
+
+    triples, adj = b1p_index
+    sel, truncated = neighborhood(triples, adj, _uri("a"), 3, 2)
+    assert truncated and len(sel) == 2
+    assert sel[0] == (_uri("a"), _uri("p"), _uri("b"))  # closest survives
+
+
+def test_neighborhood_facts_extras_and_coverage(b1p_index):
+    from experiments.harness import neighborhood_facts
+
+    triples, adj = b1p_index
+    task = {"id": "qa-0", "question": "?", "start": "ns:a",
+            "answer": "ns:d", "hops": 3}
+    ttl, extras = neighborhood_facts(triples, adj, task, None, 100)
+    assert extras == {"b1p_radius": 3, "b1p_triples": 5,
+                      "b1p_truncated": False, "b1p_gold_in_context": True}
+    assert "@prefix ns:" in ttl and "ns:d" in ttl
+    # Radius from the task's hop count: at hops=1 the gold d is unreachable.
+    ttl1, extras1 = neighborhood_facts(triples, adj, {**task, "hops": 1}, None, 100)
+    assert extras1["b1p_radius"] == 1
+    assert extras1["b1p_gold_in_context"] is False
+    assert "ns:d" not in ttl1.replace("@prefix", "")
+    # Explicit --b1p-radius override wins over the hop count.
+    _, extras_fixed = neighborhood_facts(triples, adj, {**task, "hops": 1}, 3, 100)
+    assert extras_fixed["b1p_radius"] == 3
+    assert extras_fixed["b1p_gold_in_context"] is True
+
+
+def test_render_prompt_b1p_embeds_facts_and_hint():
+    task = {"id": "qa-0", "question": "who?", "start": "ns:a",
+            "answer": "ns:d", "hops": 2}
+    ttl = "@prefix ns: <http://nsai.local/ns#> ."
+    prompt = render_prompt(task, "qa", "B1p", ttl)
+    assert "KNOWLEDGE BASE" in prompt and "@prefix" in prompt
+    assert "retrieved around the question entity" in prompt
+
+
+def test_b1p_condition_options_are_toolless(tmp_path: Path):
+    kb = tmp_path / "kb.ttl"
+    kb.write_text(B1P_TTL, encoding="utf-8")
+    options = build_condition_options(kb, "B1p", None)
+    assert options.tools == [] and options.allowed_tools == []
+    assert not options.mcp_servers
+
+
+def test_c2f_forces_delegation_prompt_and_subagents(tmp_path: Path):
+    task = {"id": "qa-0", "question": "who?", "start": "ns:a",
+            "answer": "ns:d", "hops": 2}
+    prompt = render_prompt(task, "qa", "C2f", None)
+    assert "symbolic-explorer" in prompt
+    assert "run_in_background: false" in prompt
+    # C2 (unforced) must NOT carry the mandate — that's the ablation.
+    assert "symbolic-explorer" not in render_prompt(task, "qa", "C2", None)
+    # Options: C2f gets subagents exactly like C2.
+    kb = tmp_path / "kb.ttl"
+    kb.write_text("@prefix ns: <http://nsai.local/ns#> .\n", encoding="utf-8")
+    options = build_condition_options(kb, "C2f", None)
+    assert options.agents and "Task" in options.allowed_tools
+
+
+def test_b2_agentic_grep_condition(tmp_path: Path):
+    task = {"id": "qa-0", "question": "who?", "start": "ns:a",
+            "answer": "ns:d", "hops": 2}
+    prompt = render_prompt(task, "qa", "B2", None)
+    assert "kb.ttl" in prompt and "Grep" in prompt
+    assert "@prefix" not in prompt          # facts are never inlined for B2
+    kb = tmp_path / "kb.ttl"
+    kb.write_text("@prefix ns: <http://nsai.local/ns#> .\n", encoding="utf-8")
+    options = build_condition_options(kb, "B2", None)
+    assert sorted(options.tools) == ["Glob", "Grep", "Read"]
+    assert options.cwd == str(tmp_path)     # pinned to the scratch dir
+    assert not options.mcp_servers          # no symbolic layer
+    assert options.agents is None           # no subagents
+
+
+def test_all_condition_options_raise_stream_buffer(tmp_path: Path):
+    # A broad Grep over the 4.3MB MetaQA Turtle file produced a >1MiB tool
+    # result and killed a B2 run at the SDK's default buffer; every
+    # condition streams tool results, so all get the raised limit.
+    from experiments.harness import MAX_BUFFER_SIZE
+
+    kb = tmp_path / "kb.ttl"
+    kb.write_text("@prefix ns: <http://nsai.local/ns#> .\n", encoding="utf-8")
+    for cond in ("B0", "B2", "C1", "C2"):
+        options = build_condition_options(kb, cond, None)
+        assert options.max_buffer_size == MAX_BUFFER_SIZE, cond

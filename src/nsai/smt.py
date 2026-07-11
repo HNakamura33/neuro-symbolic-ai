@@ -12,6 +12,13 @@ import z3
 
 _TYPES = {"int": z3.Int, "real": z3.Real, "bool": z3.Bool}
 
+#: Hard cap on solver time. Z3's nonlinear arithmetic (nlsat) can run for
+#: hours on innocuous-looking goals; the MCP server runs in-process, so an
+#: unbounded check() wedges the whole agent session (observed live: two
+#: experiment streams spun at 100% CPU for 3.5h inside nlsat::explain).
+#: On timeout check() returns unknown and the agent is told to reformulate.
+TIMEOUT_MS = 30_000
+
 # Only z3 connectives are exposed; expressions use python operators
 # (<, <=, ==, +, *, ...) on z3 terms, plus And/Or/Not/Implies.
 _SAFE_GLOBALS = {
@@ -49,6 +56,7 @@ def smt_verify(
         return {"error": f"unknown type {e} (use int | real | bool)"}
 
     solver = z3.Solver()
+    solver.set("timeout", TIMEOUT_MS)
     try:
         for a in assumptions:
             solver.add(_parse(a, env))
@@ -66,7 +74,7 @@ def smt_verify(
             }
         if status == z3.unsat:
             return {"verdict": "inconsistent", "detail": "The assumptions contradict each other."}
-        return {"verdict": "unknown"}
+        return {"verdict": "unknown", "detail": _unknown_detail(solver)}
 
     solver.add(z3.Not(goal_expr))
     status = solver.check()
@@ -79,4 +87,12 @@ def smt_verify(
             "counterexample": {d.name(): str(model[d]) for d in model.decls()},
             "detail": "The assumptions allow a case where the goal is false.",
         }
-    return {"verdict": "unknown"}
+    return {"verdict": "unknown", "detail": _unknown_detail(solver)}
+
+
+def _unknown_detail(solver: z3.Solver) -> str:
+    reason = solver.reason_unknown()
+    if "timeout" in reason or "canceled" in reason:
+        return (f"Solver hit the {TIMEOUT_MS // 1000}s time limit. Simplify the "
+                "formulation (avoid nonlinear terms, tighten variable bounds).")
+    return f"Solver could not decide: {reason}"
