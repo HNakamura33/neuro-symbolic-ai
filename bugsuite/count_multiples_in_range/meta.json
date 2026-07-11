@@ -1,0 +1,8 @@
+{
+  "name": "count_multiples_in_range",
+  "category": "interval-arithmetic",
+  "bug_type": "off-by-one",
+  "source": "handwritten",
+  "feasible": true,
+  "entry_point": "count_multiples_in_range"
+}

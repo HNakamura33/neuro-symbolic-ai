@@ -35,3 +35,14 @@ def test_unknown_name_rejected():
 def test_empty_domain_rejected():
     result = solve_csp(variables={"x": []}, constraints=[])
     assert "error" in result
+
+
+def test_oversized_search_space_is_refused():
+    # 100^4 = 1e8 assignments would enumerate in-process with no interrupt
+    # point; the guard must refuse instead of wedging the agent session.
+    r = solve_csp(
+        variables={n: list(range(100)) for n in ("a", "b", "c", "d")},
+        constraints=["a < b"],
+    )
+    assert "error" in r
+    assert "search space" in r["error"]

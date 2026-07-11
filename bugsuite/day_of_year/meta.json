@@ -1,0 +1,8 @@
+{
+  "name": "day_of_year",
+  "category": "date-handling",
+  "bug_type": "comparison-operator",
+  "source": "handwritten",
+  "feasible": true,
+  "entry_point": "day_of_year"
+}

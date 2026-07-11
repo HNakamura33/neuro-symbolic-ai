@@ -1,0 +1,8 @@
+{
+  "name": "paginate",
+  "category": "pagination",
+  "bug_type": "plus-minus-one",
+  "source": "handwritten",
+  "feasible": true,
+  "entry_point": "paginate"
+}

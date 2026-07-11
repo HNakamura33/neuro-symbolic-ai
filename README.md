@@ -70,6 +70,10 @@ uv sync
 export ANTHROPIC_API_KEY=sk-ant-...
 ```
 
+開発(テスト実行)は `uv sync --dev`。code2kb の libclang バックエンドを触るときだけ
+`uv sync --dev --extra clang` を使う(libclang は wheel のないプラットフォームがあるため
+dev 必須にはしていない。未インストールでも該当テストは自動スキップされる)。
+
 ## 使い方
 
 ### エージェント経由(LLM)
@@ -146,7 +150,7 @@ uv run nsai kb show
 uv run nsai kb query "SELECT ?s WHERE { ?s a ns:Human }"
 uv run nsai kb infer                                  # 推論結果を実体化
 uv run nsai kb export backup.ttl                      # / kb import backup.ttl
-uv run nsai kb build-from-code src/                   # ast で構造的事実を抽出(LLM不要)
+uv run nsai kb build-from-code src/                   # 構造的事実を抽出(LLM不要; Python/C/C++/TS/Rust)
 uv run nsai kb stats
 ```
 

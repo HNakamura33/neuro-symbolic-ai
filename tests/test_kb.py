@@ -104,3 +104,35 @@ def test_parse_literals():
     assert parse_term("42", as_object=True).toPython() == 42
     assert parse_term('"Tokyo"', as_object=True).toPython() == "Tokyo"
     assert parse_term("true", as_object=True).toPython() is True
+
+
+def test_closure_cache_reused_and_invalidated(kb: KnowledgeBase):
+    kb.add_triples([("ns:alice", "ns:knows", "ns:bob")])
+    first = kb.closure()
+    assert kb.closure() is first  # cached until the graph changes
+    kb.add_triples([("ns:bob", "ns:knows", "ns:carol")])
+    second = kb.closure()
+    assert second is not first
+    assert (parse_term("ns:bob"), parse_term("ns:knows"), parse_term("ns:carol")) in second
+    kb.remove_triples([("ns:bob", "ns:knows", "ns:carol")])
+    assert kb.closure() is not second
+
+
+def test_sparql_deadline_interrupts_explosive_join(tmp_path, monkeypatch):
+    # A three-way unconstrained join over n triples enumerates n^3 rows in
+    # pure Python; without the deadline this wedges the agent session
+    # (observed live on MetaQA). 2k triples -> 8e9 combinations, far past
+    # any 1s budget.
+    import nsai.kb as kb_mod
+
+    kb = kb_mod.KnowledgeBase(tmp_path / "kb.ttl")
+    kb.add_triples([(f"ns:s{i}", "ns:p", f"ns:o{i}") for i in range(2000)],
+                   source="test")
+    monkeypatch.setattr(kb_mod, "SPARQL_TIMEOUT_S", 1)
+    import time
+    t0 = time.monotonic()
+    with pytest.raises(kb_mod.QueryTimeout, match="under-constrained"):
+        kb.sparql("SELECT ?a ?b ?c WHERE { ?a ?p1 ?x . ?y ?p2 ?b . ?z ?p3 ?c }")
+    assert time.monotonic() - t0 < 10
+    # The KB stays usable after the interrupt.
+    assert kb.sparql("ASK { ns:s0 ns:p ns:o0 }") is True

@@ -1,17 +1,4 @@
-"""Static analysis → knowledge base (code2kb).
-
-Extracts *structural* facts from Python source deterministically with the
-`ast` module — no LLM involved — so the KB gets a complete, exact "ground"
-layer that LLM-extracted contracts and invariants can sit on top of:
-
-    (ns:pkg.mod_a,        ns:imports,       ns:pkg.mod_b)
-    (ns:pkg.mod_a.f,      ns:defined_in,    ns:pkg.mod_a)
-    (ns:pkg.mod_a.f,      ns:calls,         ns:pkg.mod_a.g)
-    (ns:pkg.mod_a.ClassA, rdfs:subClassOf,  ns:pkg.mod_a.ClassB)
-    (ns:pkg.mod_a.f,      ns:raises,        ns:ValueError)
-
-Entities also get an rdf:type (ns:Module / ns:Class / ns:Function) so the
-graph is queryable by kind.
+"""Python extractor: stdlib ``ast``-based, the most precise of the family.
 
 Caveats (inherent to static analysis, recorded as-is):
   - `ns:calls` covers only statically visible call targets; dynamic dispatch
@@ -25,12 +12,11 @@ Caveats (inherent to static analysis, recorded as-is):
 from __future__ import annotations
 
 import ast
-import re
 from pathlib import Path
-from typing import Iterator
 
-# Only names that survive kb.parse_term's bare-word rule are recorded.
-_NAME_RE = re.compile(r"^[\w.-]+$")
+from .base import emit
+
+EXTENSIONS = {".py"}
 
 
 def module_name_for(path: Path) -> str:
@@ -78,8 +64,7 @@ class _Extractor(ast.NodeVisitor):
     # -- helpers ---------------------------------------------------------------
 
     def _emit(self, s: str, p: str, o: str) -> None:
-        if _NAME_RE.match(s) and _NAME_RE.match(o):
-            self.triples.append((s, p, o))
+        emit(self.triples, s, p, o)
 
     def _qualify(self, name: str) -> str:
         """Resolve a dotted name through import aliases and local definitions."""
@@ -167,20 +152,9 @@ def extract_module_triples(source: str, module: str) -> list[tuple[str, str, str
     return list(dict.fromkeys(extractor.triples))
 
 
-def iter_python_files(path: Path) -> Iterator[Path]:
-    """Yield .py files under `path` (or `path` itself) in a stable order."""
-    if path.is_file():
-        yield path
-    else:
-        yield from sorted(path.rglob("*.py"))
+def module_name(path: Path, root: Path) -> str:
+    return module_name_for(path)
 
 
-def extract_from_path(path: Path) -> Iterator[tuple[Path, list[tuple[str, str, str]]]]:
-    """Yield (file, triples) per Python file; files that fail to parse yield []."""
-    for file in iter_python_files(path):
-        try:
-            source = file.read_text(encoding="utf-8")
-            triples = extract_module_triples(source, module_name_for(file))
-        except (SyntaxError, UnicodeDecodeError):
-            triples = []
-        yield file, triples
+def extract(source: str, module: str, path: Path | None = None) -> list[tuple[str, str, str]]:
+    return extract_module_triples(source, module)

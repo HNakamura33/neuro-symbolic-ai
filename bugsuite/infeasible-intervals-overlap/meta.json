@@ -1,0 +1,8 @@
+{
+  "name": "infeasible-intervals-overlap",
+  "category": "interval-arithmetic",
+  "bug_type": "spec-contradiction",
+  "source": "handwritten",
+  "feasible": false,
+  "entry_point": "intervals_overlap_strict"
+}

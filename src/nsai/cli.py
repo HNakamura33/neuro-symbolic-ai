@@ -276,16 +276,23 @@ def kb_source(
 @kb_app.command("build-from-code")
 def kb_build_from_code(
     path: Path = typer.Argument(
-        ..., exists=True, readable=True, help="Python file or directory to analyze"
+        ..., exists=True, readable=True, help="Source file or directory to analyze"
+    ),
+    cpp_backend: str = typer.Option(
+        "treesitter",
+        "--cpp-backend",
+        help="C/C++ parser backend: 'treesitter' (default, no build needed) or "
+        "'clang' (higher precision; requires the nsai[clang] extra).",
     ),
     kb: Optional[Path] = KBPathOption,
 ):
-    """Extract structural facts from Python source into the KB (no LLM).
+    """Extract structural facts from source code into the KB (no LLM).
 
-    Records imports, definitions, statically visible calls, class hierarchy,
-    and raised exceptions via the ast module, with per-file provenance.
-    Re-running after code changes only adds new triples; stale contracts then
-    surface as contradictions through `kb check`.
+    Supports Python, C/C++, TypeScript/JavaScript, and Rust. Records imports,
+    definitions, statically visible calls, class hierarchy, and raised
+    exceptions, with per-file provenance. Re-running after code changes only
+    adds new triples; stale contracts then surface as contradictions through
+    `kb check`.
     """
     from .code2kb import extract_from_path
 
@@ -293,7 +300,7 @@ def kb_build_from_code(
     files = 0
     skipped = 0
     total = 0
-    for file, triples in extract_from_path(path):
+    for file, triples in extract_from_path(path, cpp_backend=cpp_backend):
         files += 1
         if not triples:
             skipped += 1

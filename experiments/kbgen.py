@@ -11,7 +11,9 @@ Generates, from one seed, a coherent people/companies/geography world:
 - k-hop QA pairs for experiment 2 — every step predicate is functional,
   so the answer is unique by construction
 - optional contradiction injection for experiment 3 — conflicting values
-  for functional properties, recorded under a different provenance source
+  for functional properties, recorded under a different provenance source.
+  Injected triples go into a separate kb-audit.ttl copy; kb.ttl stays clean
+  so claim/QA gold labels remain valid
 
 Everything is driven by random.Random(seed): same arguments → identical
 dataset, so conditions and runs see the same tasks.
@@ -22,6 +24,7 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import shutil
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
@@ -341,6 +344,26 @@ def inject_contradictions(dataset: Dataset, n: int, seed: int = 0) -> list[Tripl
     return injected
 
 
+def write_audit_kb(out: Path, dataset: Dataset, n: int, seed: int = 0) -> list[Triple]:
+    """Copy kb.ttl to kb-audit.ttl and inject n contradictions there.
+
+    Injection must never touch kb.ttl: under OWL-RL a functional-property
+    conflict entails owl:sameAs between the two objects, which merges
+    entities and silently flips claim/QA gold labels.
+    """
+    injected = inject_contradictions(dataset, n, seed=seed)
+    shutil.copy(out / "kb.ttl", out / "kb-audit.ttl")
+    prov = out / "kb.prov.jsonl"
+    if prov.exists():
+        shutil.copy(prov, out / "kb-audit.prov.jsonl")
+    kb = KnowledgeBase(out / "kb-audit.ttl")
+    kb.add_triples(injected, source="injected")
+    with (out / "injected.jsonl").open("w", encoding="utf-8") as f:
+        for s, p, o in injected:
+            f.write(json.dumps({"subject": s, "predicate": p, "object": o}) + "\n")
+    return injected
+
+
 # -- CLI --------------------------------------------------------------------------
 
 
@@ -362,13 +385,8 @@ def main() -> None:
     )
     ds.save(args.out)
     if args.inject:
-        injected = inject_contradictions(ds, args.inject, seed=args.seed)
-        kb = KnowledgeBase(args.out / "kb.ttl")
-        kb.add_triples(injected, source="injected")
-        with (args.out / "injected.jsonl").open("w", encoding="utf-8") as f:
-            for s, p, o in injected:
-                f.write(json.dumps({"subject": s, "predicate": p, "object": o}) + "\n")
-        print(f"injected {len(injected)} contradictions")
+        injected = write_audit_kb(args.out, ds, args.inject, seed=args.seed)
+        print(f"injected {len(injected)} contradictions into kb-audit.ttl")
     print(json.dumps(ds.meta, indent=2))
 
 

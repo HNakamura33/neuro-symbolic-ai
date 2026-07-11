@@ -1,0 +1,8 @@
+{
+  "name": "merge_intervals",
+  "category": "interval-arithmetic",
+  "bug_type": "comparison-operator",
+  "source": "handwritten",
+  "feasible": true,
+  "entry_point": "merge_intervals"
+}

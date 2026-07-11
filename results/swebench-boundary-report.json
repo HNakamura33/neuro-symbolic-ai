@@ -1,0 +1,43 @@
+{
+  "total_scanned": 500,
+  "qualified": 9,
+  "hits_per_class": {
+    "comparison_operator": 2,
+    "constant_delta": 0,
+    "minmax_guard": 7,
+    "index_date_arith": 0
+  },
+  "excluded": {
+    "no_boundary_change": 9,
+    "non_py_code_change": 1,
+    "too_many_files": 22,
+    "too_many_lines": 112,
+    "unclassified_change": 347
+  },
+  "filter_criteria": {
+    "classes": [
+      "comparison_operator",
+      "constant_delta",
+      "minmax_guard",
+      "index_date_arith"
+    ],
+    "max_code_files": 2,
+    "max_changed_lines": 10,
+    "changed_line_metric": "sum over change blocks of max(#removed, #added), tests/docs excluded",
+    "small_constant_delta": 2,
+    "rule": "ALL code changes must fall in the boundary classes",
+    "benign_changes": "comments, whitespace, str/bytes constant tweaks (do not count as boundary hits; alone they do not qualify)"
+  },
+  "qualified_instance_ids": [
+    "django__django-11206",
+    "django__django-16485",
+    "django__django-16569",
+    "matplotlib__matplotlib-22719",
+    "matplotlib__matplotlib-26113",
+    "pylint-dev__pylint-4970",
+    "pylint-dev__pylint-6903",
+    "sympy__sympy-14711",
+    "sympy__sympy-15875"
+  ],
+  "source": "data/swebench_verified/test.jsonl"
+}

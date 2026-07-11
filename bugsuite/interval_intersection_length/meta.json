@@ -1,0 +1,8 @@
+{
+  "name": "interval_intersection_length",
+  "category": "interval-arithmetic",
+  "bug_type": "inclusive-exclusive-end",
+  "source": "handwritten",
+  "feasible": true,
+  "entry_point": "interval_intersection_length"
+}

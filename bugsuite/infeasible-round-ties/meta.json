@@ -1,0 +1,8 @@
+{
+  "name": "infeasible-round-ties",
+  "category": "rounding",
+  "bug_type": "spec-contradiction",
+  "source": "handwritten",
+  "feasible": false,
+  "entry_point": "round_ties"
+}

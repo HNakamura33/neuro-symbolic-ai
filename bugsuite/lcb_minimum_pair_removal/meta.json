@@ -1,0 +1,9 @@
+{
+  "name": "lcb_minimum_pair_removal",
+  "category": "index-calculation",
+  "bug_type": "comparison-operator",
+  "source": "livecodebench",
+  "feasible": true,
+  "entry_point": "minimumPairRemoval",
+  "lcb_problem_id": "3773"
+}
