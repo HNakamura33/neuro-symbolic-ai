@@ -65,27 +65,38 @@ SIGALRM デッドラインと KB スクラッチコピーがプロセス内で�
 
 ## 3. レーン定義
 
-### レーン A: claims への B2(コード変更ゼロ、~数$)
+### レーン A: claims への B2(コード変更ゼロ、~$3–5)
 
 RQ1 防御。推論必須の claims で grep ベースの B2 が原理的に落ちることの実証。
+コスト削減版: 全 4 グリッド 984 claims でなく、**s500 全 300 件**(全 kind が
+バランス良く入っている)+ **s5000 の推論必須 150 件**(data/s5000-inference:
+inferred_subclass / inferred_same_as / functional_conflict / different_from のみ、
+規模軸のヘッジ)の計 450 件に絞る。
 
 ```sh
-for d in s100 s500 s2000 s5000; do
-  uv run python -m experiments.harness --dataset data/$d --task-type claims \
-    --condition B2 --out results/$d-B2.jsonl
-done
+uv run python -m experiments.harness --dataset data/s500 --task-type claims \
+  --condition B2 --model sonnet --out results/s500-B2.jsonl
+uv run python -m experiments.harness --dataset data/s5000-inference --task-type claims \
+  --condition B2 --model sonnet --out results/s5000-inference-B2.jsonl
 ```
 
-命名は既存の `s{size}-{条件}.jsonl` に合わせる。約 192–300 claims × 4 グリッド。
+s100/s2000 の残りは、上記の結果が曖昧(推論必須 claim で B2 が落ちない等)
+だった場合のみ追加する。集計は kind 別に出すこと(explicit/silent は
+B2 でも取れて当然、inferred_*/functional_conflict/different_from が主戦場)。
 
-### レーン B: 摂動版 B2(コード変更ゼロ、~$22)
+### レーン B: 摂動版 B2(コード変更ゼロ、~$11)
 
-頑健性の列の完成。600 QA。
+頑健性の列の完成。コスト削減版: 600 全件でなく **層化 300 件**
+(data/metaqa-pert-300: hop ごと seed 42 で 100 件抽出)。既存の
+metaqa-pert-C1/C2(600 件)との比較は同一 task_id に絞った対比較で行う。
 
 ```sh
-uv run python -m experiments.harness --dataset data/metaqa-perturbed \
-  --task-type qa --condition B2 --out results/metaqa-pert-B2.jsonl
+uv run python -m experiments.harness --dataset data/metaqa-pert-300 \
+  --task-type qa --condition B2 --model sonnet --out results/metaqa-pert300-B2.jsonl
 ```
+
+結果が際どい(原版 B2 との差が判定不能)場合のみ残り 300 件を追加する
+(data/metaqa-perturbed から pert-300 の id を除いたサブセットを作って追記)。
 
 ### レーン C: 4a/4c の haiku 追試(コード変更ゼロ、~$10)
 
@@ -170,6 +181,13 @@ data/resume-C2f-null/ と同じ構造: qa.jsonl + kb.ttl + entities.json + meta.
 
 統計用の run 1–4(合成)/ run 1–2(MetaQA)は、**D–F の修正の扱いを決めてから**
 別途計画する(修正前後の条件が混ざった run は統計にかけられない)。
+
+**統計 run のコスト注意(最大の削減ポイント)**: 条件間比較(C1 vs B2 等)は
+同一 600 タスクの対応ありデータとして **McNemar が run 0 だけで既に検定可能**
+(experiments/grade.py の mcnemar_exact)。追加 run が必要なのは run 間分散の主張
+だけなので、全条件×複数 run(MetaQA だと 1 run ~$183)は組まない —
+主張の主役条件(C1/C2/B2)に 1 run 追加(~$73)が上限の目安。
+B0($6 だが結論固定)・B1p($127)・C2f(rev3 で置換済み)の再 run は不要。
 
 ## 5. 終了時(各レーン)
 
