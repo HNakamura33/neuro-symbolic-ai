@@ -1,0 +1,14 @@
+{
+  "seed": 42,
+  "size_requested": 2000,
+  "triples": 1892,
+  "people": 400,
+  "claims": 300,
+  "qa": 200,
+  "hops": [
+    2,
+    3,
+    4,
+    6
+  ]
+}

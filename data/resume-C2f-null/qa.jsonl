@@ -1,0 +1,51 @@
+{"id": "metaqa-1hop-95", "question": "what is a film directed by Daniel Haller", "start": "ns:Daniel_Haller", "answer": "ns:The_Dunwich_Horror", "hops": 1}
+{"id": "metaqa-1hop-100", "question": "what movies can be described by sally hawkins", "start": "ns:sally_hawkins", "answer": "ns:Blue_Jasmine", "hops": 1}
+{"id": "metaqa-1hop-127", "question": "when was the film Straw Dogs released", "start": "ns:Straw_Dogs", "answer": "ns:2011", "hops": 1}
+{"id": "metaqa-1hop-131", "question": "what are some words that describe movie The Son's Room", "start": "ns:The_Son_s_Room", "answer": "ns:nanni_moretti", "hops": 1}
+{"id": "metaqa-1hop-157", "question": "what was the release date of Marjorie Morningstar", "start": "ns:Marjorie_Morningstar", "answer": "ns:1958", "hops": 1}
+{"id": "metaqa-1hop-180", "question": "what sort of movie is Simple Simon", "start": "ns:Simple_Simon", "answer": "ns:Comedy", "hops": 1}
+{"id": "metaqa-1hop-183", "question": "describe Dossier 51", "start": "ns:Dossier_51", "answer": "ns:michel_deville", "hops": 1}
+{"id": "metaqa-2hop-4", "question": "which person directed the films acted by Kim Delaney", "start": "ns:Kim_Delaney", "answer": "ns:Eric_Red", "hops": 2}
+{"id": "metaqa-2hop-11", "question": "when did the films directed by Amy Seimetz release", "start": "ns:Amy_Seimetz", "answer": "ns:2012", "hops": 2}
+{"id": "metaqa-2hop-18", "question": "what were the release dates of Georges Darien written movies", "start": "ns:Georges_Darien", "answer": "ns:1967", "hops": 2}
+{"id": "metaqa-2hop-20", "question": "what were the release dates of Elizabeth Bogush starred movies", "start": "ns:Elizabeth_Bogush", "answer": "ns:2006", "hops": 2}
+{"id": "metaqa-2hop-21", "question": "the movies written by Jordan Scott were released in which years", "start": "ns:Jordan_Scott", "answer": "ns:2009", "hops": 2}
+{"id": "metaqa-2hop-30", "question": "the movies directed by Marion Vernoux were in which genres", "start": "ns:Marion_Vernoux", "answer": "ns:Romance", "hops": 2}
+{"id": "metaqa-2hop-32", "question": "when were the films directed by Derek Cianfrance released", "start": "ns:Derek_Cianfrance", "answer": "ns:2010", "hops": 2}
+{"id": "metaqa-2hop-40", "question": "what were the release dates of Lawrie Brewster directed movies", "start": "ns:Lawrie_Brewster", "answer": "ns:2013", "hops": 2}
+{"id": "metaqa-2hop-41", "question": "what genres do the films written by Ian Hislop fall under", "start": "ns:Ian_Hislop", "answer": "ns:Comedy", "hops": 2}
+{"id": "metaqa-2hop-42", "question": "the films written by Doris Dörrie were in which languages", "start": "ns:Doris_Dörrie", "answer": "ns:German", "hops": 2}
+{"id": "metaqa-2hop-52", "question": "what genres do the movies acted by Tate Donovan fall under", "start": "ns:Tate_Donovan", "answer": "ns:Drama", "hops": 2}
+{"id": "metaqa-2hop-58", "question": "what were the release dates of John Shirley written movies", "start": "ns:John_Shirley", "answer": "ns:1994", "hops": 2}
+{"id": "metaqa-2hop-64", "question": "when were the movies written by Gerald Kargl released", "start": "ns:Gerald_Kargl", "answer": "ns:1983", "hops": 2}
+{"id": "metaqa-2hop-75", "question": "who are the directors of the films written by Edmund Joseph", "start": "ns:Edmund_Joseph", "answer": "ns:Michael_Curtiz", "hops": 2}
+{"id": "metaqa-2hop-77", "question": "the films directed by Ziad Doueiri were in which languages", "start": "ns:Ziad_Doueiri", "answer": "ns:French", "hops": 2}
+{"id": "metaqa-2hop-82", "question": "what are the genres of the films starred by T. Roy Barnes", "start": "ns:T._Roy_Barnes", "answer": "ns:Comedy", "hops": 2}
+{"id": "metaqa-2hop-124", "question": "who is listed as director of Willeke van Ammelrooy starred movies", "start": "ns:Willeke_van_Ammelrooy", "answer": "ns:Marleen_Gorris", "hops": 2}
+{"id": "metaqa-2hop-129", "question": "what were the release years of the movies directed by Jim Gillespie", "start": "ns:Jim_Gillespie", "answer": "ns:1997", "hops": 2}
+{"id": "metaqa-2hop-147", "question": "what were the release dates of Richard Collins written films", "start": "ns:Richard_Collins", "answer": "ns:1958", "hops": 2}
+{"id": "metaqa-2hop-148", "question": "what were the release years of the movies directed by Ricardo Trogi", "start": "ns:Ricardo_Trogi", "answer": "ns:2009", "hops": 2}
+{"id": "metaqa-2hop-152", "question": "the films directed by Giulio Petroni were in which genres", "start": "ns:Giulio_Petroni", "answer": "ns:Western", "hops": 2}
+{"id": "metaqa-2hop-160", "question": "who are co-stars of Alison Skipworth", "start": "ns:Alison_Skipworth", "answer": "ns:Paul_Lukas", "hops": 2}
+{"id": "metaqa-2hop-165", "question": "what genres do the movies written by Cyra McFadden fall under", "start": "ns:Cyra_McFadden", "answer": "ns:Comedy", "hops": 2}
+{"id": "metaqa-2hop-176", "question": "what were the release dates of Dillon Casey acted films", "start": "ns:Dillon_Casey", "answer": "ns:2011", "hops": 2}
+{"id": "metaqa-2hop-178", "question": "who acted in the films written by Duncan North", "start": "ns:Duncan_North", "answer": "ns:Donal_Logue", "hops": 2}
+{"id": "metaqa-2hop-188", "question": "what were the release dates of Georgie Henley acted films", "start": "ns:Georgie_Henley", "answer": "ns:2014", "hops": 2}
+{"id": "metaqa-2hop-190", "question": "which movies share the same actor of Armless", "start": "ns:Armless", "answer": "ns:Lisa_Picard_Is_Famous", "hops": 2}
+{"id": "metaqa-2hop-196", "question": "what were the release years of the movies acted by Ryan McDonald", "start": "ns:Ryan_McDonald", "answer": "ns:2005", "hops": 2}
+{"id": "metaqa-3hop-10", "question": "the movies that share actors with the movie Holy Motors were in which languages", "start": "ns:Holy_Motors", "answer": "ns:French", "hops": 3}
+{"id": "metaqa-3hop-12", "question": "what are the primary languages in the movies starred by actors in Singles", "start": "ns:Singles", "answer": "ns:French", "hops": 3}
+{"id": "metaqa-3hop-51", "question": "what languages are the films that share directors with Halloween in", "start": "ns:Halloween", "answer": "ns:Norwegian", "hops": 3}
+{"id": "metaqa-3hop-91", "question": "what languages are the films that share actors with Father and Guns in", "start": "ns:Father_and_Guns", "answer": "ns:English", "hops": 3}
+{"id": "metaqa-3hop-100", "question": "which person directed the films acted by the actors in Edge of Seventeen", "start": "ns:Edge_of_Seventeen", "answer": "ns:Jonah_Markowitz", "hops": 3}
+{"id": "metaqa-3hop-110", "question": "when did the films starred by Cornelis actors release", "start": "ns:Cornelis", "answer": "ns:2013", "hops": 3}
+{"id": "metaqa-3hop-119", "question": "what are the languages spoken in the films written by Welcome to Sarajevo screenwriters", "start": "ns:Welcome_to_Sarajevo", "answer": "ns:English", "hops": 3}
+{"id": "metaqa-3hop-122", "question": "what are the languages spoken in the movies directed by the Essential Killing director", "start": "ns:Essential_Killing", "answer": "ns:Polish", "hops": 3}
+{"id": "metaqa-3hop-123", "question": "who is listed as screenwriter of the movies starred by Martha actors", "start": "ns:Martha", "answer": "ns:Rainer_Werner_Fassbinder", "hops": 3}
+{"id": "metaqa-3hop-127", "question": "what languages are the films that share actors with Delitto a Porta Romana in", "start": "ns:Delitto_a_Porta_Romana", "answer": "ns:Italian", "hops": 3}
+{"id": "metaqa-3hop-134", "question": "what were the release dates of movies directed by the director of Scum", "start": "ns:Scum", "answer": "ns:1974", "hops": 3}
+{"id": "metaqa-3hop-145", "question": "the movies directed by the director of Kisses starred who", "start": "ns:Kisses", "answer": "ns:Orlando_Bloom", "hops": 3}
+{"id": "metaqa-3hop-169", "question": "the films that share directors with the film Route 666 were in which genres", "start": "ns:Route_666", "answer": "ns:Horror", "hops": 3}
+{"id": "metaqa-3hop-174", "question": "what were the release dates of movies written by the writer of Blue Ruin", "start": "ns:Blue_Ruin", "answer": "ns:2007", "hops": 3}
+{"id": "metaqa-3hop-187", "question": "what genres are the movies written by The Deluge writers", "start": "ns:The_Deluge", "answer": "ns:Drama", "hops": 3}
+{"id": "metaqa-3hop-196", "question": "what are the primary languages in the movies directed by the director of The Swan", "start": "ns:The_Swan", "answer": "ns:English", "hops": 3}

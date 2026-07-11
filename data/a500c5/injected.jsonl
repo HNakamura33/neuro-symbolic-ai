@@ -1,0 +1,5 @@
+{"subject": "ns:person_70", "predicate": "ns:born_in", "object": "ns:city_3"}
+{"subject": "ns:person_96", "predicate": "ns:born_in", "object": "ns:city_4"}
+{"subject": "ns:company_0", "predicate": "ns:hq_in", "object": "ns:city_11"}
+{"subject": "ns:person_4", "predicate": "ns:works_at", "object": "ns:company_8"}
+{"subject": "ns:person_62", "predicate": "ns:born_in", "object": "ns:city_0"}

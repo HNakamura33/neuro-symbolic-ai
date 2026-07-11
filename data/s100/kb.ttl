@@ -1,0 +1,147 @@
+@prefix ns: <http://nsai.local/ns#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ns:born_in a owl:FunctionalProperty .
+
+ns:hq_in a owl:FunctionalProperty .
+
+ns:located_in a owl:FunctionalProperty .
+
+ns:person_10_alias owl:sameAs ns:person_10 .
+
+ns:person_18_alias owl:sameAs ns:person_18 .
+
+ns:person_19 a ns:Manager ;
+    ns:born_in ns:city_2 ;
+    ns:reports_to ns:person_5 ;
+    ns:works_at ns:company_1 .
+
+ns:person_7 a ns:Engineer ;
+    ns:born_in ns:city_5 ;
+    ns:reports_to ns:person_8 ;
+    ns:works_at ns:company_3 .
+
+ns:reports_to a owl:FunctionalProperty .
+
+ns:works_at a owl:FunctionalProperty .
+
+ns:Person rdfs:subClassOf ns:Agent .
+
+ns:city_4 ns:located_in ns:country_0 .
+
+ns:person_0 a ns:Engineer ;
+    ns:born_in ns:city_5 ;
+    ns:reports_to ns:person_3 ;
+    ns:works_at ns:company_3 .
+
+ns:person_1 a ns:Engineer ;
+    ns:born_in ns:city_3 ;
+    ns:reports_to ns:person_11 ;
+    ns:works_at ns:company_2 .
+
+ns:person_11 a ns:Engineer ;
+    ns:born_in ns:city_5 ;
+    ns:reports_to ns:person_2 ;
+    ns:works_at ns:company_1 .
+
+ns:person_12 a ns:Manager ;
+    ns:born_in ns:city_0 ;
+    ns:reports_to ns:person_17 ;
+    ns:works_at ns:company_1 .
+
+ns:person_14 a ns:Manager ;
+    ns:born_in ns:city_5 ;
+    ns:reports_to ns:person_4 ;
+    ns:works_at ns:company_2 .
+
+ns:person_17 a ns:Engineer ;
+    ns:born_in ns:city_4 ;
+    ns:reports_to ns:person_10 ;
+    ns:works_at ns:company_1 .
+
+ns:person_2 a ns:Engineer ;
+    ns:born_in ns:city_1 ;
+    ns:reports_to ns:person_16 ;
+    ns:works_at ns:company_3 .
+
+ns:person_3 a ns:Manager ;
+    ns:born_in ns:city_2 ;
+    ns:works_at ns:company_1 .
+
+ns:person_4 a ns:Engineer ;
+    ns:born_in ns:city_2 ;
+    ns:reports_to ns:person_9 ;
+    ns:works_at ns:company_0 .
+
+ns:person_5 a ns:Engineer ;
+    ns:born_in ns:city_3 ;
+    ns:reports_to ns:person_14 ;
+    ns:works_at ns:company_0 .
+
+ns:person_6 a ns:Manager ;
+    ns:born_in ns:city_2 ;
+    ns:reports_to ns:person_12 ;
+    ns:works_at ns:company_2 ;
+    owl:differentFrom ns:person_16 .
+
+ns:person_8 a ns:Engineer ;
+    ns:born_in ns:city_3 ;
+    ns:reports_to ns:person_0 ;
+    ns:works_at ns:company_0 .
+
+ns:person_9 a ns:Manager ;
+    ns:born_in ns:city_5 ;
+    ns:reports_to ns:person_13 ;
+    ns:works_at ns:company_2 .
+
+ns:Employee rdfs:subClassOf ns:Person .
+
+ns:city_0 ns:located_in ns:country_0 .
+
+ns:person_10 a ns:Engineer ;
+    ns:born_in ns:city_5 ;
+    ns:reports_to ns:person_1 ;
+    ns:works_at ns:company_0 .
+
+ns:person_13 a ns:Engineer ;
+    ns:born_in ns:city_3 ;
+    ns:reports_to ns:person_15 ;
+    ns:works_at ns:company_2 ;
+    owl:differentFrom ns:person_15 .
+
+ns:person_15 a ns:Engineer ;
+    ns:born_in ns:city_2 ;
+    ns:reports_to ns:person_18 ;
+    ns:works_at ns:company_2 ;
+    owl:differentFrom ns:person_13 .
+
+ns:person_16 a ns:Engineer ;
+    ns:born_in ns:city_5 ;
+    ns:works_at ns:company_2 ;
+    owl:differentFrom ns:person_6 .
+
+ns:person_18 a ns:Engineer ;
+    ns:born_in ns:city_1 ;
+    ns:works_at ns:company_3 .
+
+ns:city_1 ns:located_in ns:country_1 .
+
+ns:city_3 ns:located_in ns:country_1 .
+
+ns:company_0 ns:hq_in ns:city_5 .
+
+ns:company_3 ns:hq_in ns:city_1 .
+
+ns:company_1 ns:hq_in ns:city_2 .
+
+ns:Manager rdfs:subClassOf ns:Employee .
+
+ns:city_2 ns:located_in ns:country_1 .
+
+ns:company_2 ns:hq_in ns:city_0 .
+
+ns:city_5 ns:located_in ns:country_0 .
+
+ns:Engineer rdfs:subClassOf ns:Employee .
+

@@ -1,0 +1,41 @@
+{
+ "benchmark": "metaqa",
+ "source": "data/raw/metaqa",
+ "split": "test",
+ "seed": 42,
+ "sample_per_hop": 200,
+ "kb_triples": 133582,
+ "kb_lines_skipped": 0,
+ "entities": 43234,
+ "relations": 9,
+ "qa_written": 51,
+ "per_hop": {
+  "1": {
+   "found": true,
+   "total": 9947,
+   "multi_answer_dropped": 3311,
+   "malformed_dropped": 0,
+   "single_answer_kept": 6636,
+   "written": 200
+  },
+  "2": {
+   "found": true,
+   "total": 14872,
+   "multi_answer_dropped": 8930,
+   "malformed_dropped": 0,
+   "single_answer_kept": 5942,
+   "written": 200
+  },
+  "3": {
+   "found": true,
+   "total": 14274,
+   "multi_answer_dropped": 12018,
+   "malformed_dropped": 0,
+   "single_answer_kept": 2256,
+   "written": 200
+  }
+ },
+ "entity_map": "entities.json",
+ "subset": "C2f null-pred tasks (pred is None in results/metaqa-C2f.jsonl, prompt_rev 2) \u2014 H1 structured-handoff rerun",
+ "subset_created": "2026-07-11"
+}

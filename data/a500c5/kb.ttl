@@ -1,0 +1,655 @@
+@prefix ns: <http://nsai.local/ns#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ns:born_in a owl:FunctionalProperty .
+
+ns:city_1 ns:located_in ns:country_1 .
+
+ns:hq_in a owl:FunctionalProperty .
+
+ns:located_in a owl:FunctionalProperty .
+
+ns:person_11_alias owl:sameAs ns:person_11 .
+
+ns:person_15 a ns:Manager ;
+    ns:born_in ns:city_32 ;
+    ns:reports_to ns:person_78 ;
+    ns:works_at ns:company_19 .
+
+ns:person_18_alias owl:sameAs ns:person_18 .
+
+ns:person_25_alias owl:sameAs ns:person_25 .
+
+ns:person_28_alias owl:sameAs ns:person_28 .
+
+ns:person_30_alias owl:sameAs ns:person_30 .
+
+ns:person_36 a ns:Manager ;
+    ns:born_in ns:city_12 ;
+    ns:reports_to ns:person_23 ;
+    ns:works_at ns:company_3 .
+
+ns:person_39_alias owl:sameAs ns:person_39 .
+
+ns:person_3_alias owl:sameAs ns:person_3 .
+
+ns:person_42 a ns:Manager ;
+    ns:born_in ns:city_8 ;
+    ns:reports_to ns:person_41 ;
+    ns:works_at ns:company_13 .
+
+ns:person_48 a ns:Manager ;
+    ns:born_in ns:city_13 ;
+    ns:reports_to ns:person_92 ;
+    ns:works_at ns:company_12 .
+
+ns:person_58 a ns:Engineer ;
+    ns:born_in ns:city_15 ;
+    ns:reports_to ns:person_68 ;
+    ns:works_at ns:company_12 .
+
+ns:person_5_alias owl:sameAs ns:person_5 .
+
+ns:person_64 a ns:Manager ;
+    ns:born_in ns:city_20 ;
+    ns:reports_to ns:person_29 ;
+    ns:works_at ns:company_2 .
+
+ns:person_7 a ns:Engineer ;
+    ns:born_in ns:city_9 ;
+    ns:reports_to ns:person_34 ;
+    ns:works_at ns:company_5 .
+
+ns:person_80 a ns:Manager ;
+    ns:born_in ns:city_10 ;
+    ns:reports_to ns:person_49 ;
+    ns:works_at ns:company_14 .
+
+ns:person_82 a ns:Engineer ;
+    ns:born_in ns:city_9 ;
+    ns:reports_to ns:person_19 ;
+    ns:works_at ns:company_17 .
+
+ns:person_86_alias owl:sameAs ns:person_86 .
+
+ns:person_94 a ns:Engineer ;
+    ns:born_in ns:city_29 ;
+    ns:reports_to ns:person_3 ;
+    ns:works_at ns:company_11 .
+
+ns:person_96_alias owl:sameAs ns:person_96 .
+
+ns:reports_to a owl:FunctionalProperty .
+
+ns:works_at a owl:FunctionalProperty .
+
+ns:Person rdfs:subClassOf ns:Agent .
+
+ns:city_18 ns:located_in ns:country_0 .
+
+ns:city_31 ns:located_in ns:country_4 .
+
+ns:person_1 a ns:Manager ;
+    ns:born_in ns:city_25 ;
+    ns:reports_to ns:person_70 ;
+    ns:works_at ns:company_14 .
+
+ns:person_10 a ns:Manager ;
+    ns:born_in ns:city_0 ;
+    ns:reports_to ns:person_55 ;
+    ns:works_at ns:company_3 .
+
+ns:person_11 a ns:Manager ;
+    ns:born_in ns:city_21 ;
+    ns:reports_to ns:person_69 ;
+    ns:works_at ns:company_3 .
+
+ns:person_13 a ns:Manager ;
+    ns:born_in ns:city_0 ;
+    ns:reports_to ns:person_17 ;
+    ns:works_at ns:company_8 .
+
+ns:person_14 a ns:Engineer ;
+    ns:born_in ns:city_32 ;
+    ns:reports_to ns:person_81 ;
+    ns:works_at ns:company_3 .
+
+ns:person_17 a ns:Engineer ;
+    ns:born_in ns:city_0 ;
+    ns:reports_to ns:person_28 ;
+    ns:works_at ns:company_19 .
+
+ns:person_19 a ns:Engineer ;
+    ns:born_in ns:city_23 ;
+    ns:reports_to ns:person_79 ;
+    ns:works_at ns:company_9 .
+
+ns:person_2 a ns:Engineer ;
+    ns:born_in ns:city_16 ;
+    ns:reports_to ns:person_51 ;
+    ns:works_at ns:company_4 .
+
+ns:person_20 a ns:Engineer ;
+    ns:born_in ns:city_3 ;
+    ns:reports_to ns:person_0 ;
+    ns:works_at ns:company_7 .
+
+ns:person_21 a ns:Engineer ;
+    ns:born_in ns:city_5 ;
+    ns:reports_to ns:person_32 ;
+    ns:works_at ns:company_15 .
+
+ns:person_23 a ns:Manager ;
+    ns:born_in ns:city_10 ;
+    ns:reports_to ns:person_39 ;
+    ns:works_at ns:company_8 .
+
+ns:person_24 a ns:Manager ;
+    ns:born_in ns:city_13 ;
+    ns:reports_to ns:person_5 ;
+    ns:works_at ns:company_17 .
+
+ns:person_26 a ns:Manager ;
+    ns:born_in ns:city_28 ;
+    ns:reports_to ns:person_87 ;
+    ns:works_at ns:company_16 .
+
+ns:person_27 a ns:Manager ;
+    ns:born_in ns:city_7 ;
+    ns:reports_to ns:person_88 ;
+    ns:works_at ns:company_7 .
+
+ns:person_29 a ns:Engineer ;
+    ns:born_in ns:city_14 ;
+    ns:reports_to ns:person_27 ;
+    ns:works_at ns:company_18 .
+
+ns:person_32 a ns:Engineer ;
+    ns:born_in ns:city_21 ;
+    ns:reports_to ns:person_96 ;
+    ns:works_at ns:company_2 .
+
+ns:person_33 a ns:Engineer ;
+    ns:born_in ns:city_17 ;
+    ns:reports_to ns:person_8 ;
+    ns:works_at ns:company_15 .
+
+ns:person_34 a ns:Engineer ;
+    ns:born_in ns:city_8 ;
+    ns:reports_to ns:person_99 ;
+    ns:works_at ns:company_18 .
+
+ns:person_35 a ns:Manager ;
+    ns:born_in ns:city_15 ;
+    ns:works_at ns:company_15 .
+
+ns:person_37 a ns:Engineer ;
+    ns:born_in ns:city_27 ;
+    ns:reports_to ns:person_30 ;
+    ns:works_at ns:company_11 .
+
+ns:person_4 a ns:Manager ;
+    ns:born_in ns:city_25 ;
+    ns:reports_to ns:person_54 ;
+    ns:works_at ns:company_11 .
+
+ns:person_40 a ns:Manager ;
+    ns:born_in ns:city_21 ;
+    ns:reports_to ns:person_18 ;
+    ns:works_at ns:company_3 .
+
+ns:person_41 a ns:Engineer ;
+    ns:born_in ns:city_12 ;
+    ns:reports_to ns:person_91 ;
+    ns:works_at ns:company_6 .
+
+ns:person_43 a ns:Engineer ;
+    ns:born_in ns:city_17 ;
+    ns:reports_to ns:person_90 ;
+    ns:works_at ns:company_14 .
+
+ns:person_44 a ns:Engineer ;
+    ns:born_in ns:city_4 ;
+    ns:reports_to ns:person_98 ;
+    ns:works_at ns:company_14 .
+
+ns:person_45 a ns:Engineer ;
+    ns:born_in ns:city_3 ;
+    ns:works_at ns:company_17 .
+
+ns:person_46 a ns:Engineer ;
+    ns:born_in ns:city_5 ;
+    ns:reports_to ns:person_2 ;
+    ns:works_at ns:company_7 .
+
+ns:person_47 a ns:Engineer ;
+    ns:born_in ns:city_26 ;
+    ns:works_at ns:company_15 .
+
+ns:person_49 a ns:Engineer ;
+    ns:born_in ns:city_10 ;
+    ns:reports_to ns:person_83 ;
+    ns:works_at ns:company_12 .
+
+ns:person_50 a ns:Engineer ;
+    ns:born_in ns:city_24 ;
+    ns:reports_to ns:person_1 ;
+    ns:works_at ns:company_8 .
+
+ns:person_51 a ns:Manager ;
+    ns:born_in ns:city_18 ;
+    ns:reports_to ns:person_16 ;
+    ns:works_at ns:company_13 .
+
+ns:person_52 a ns:Manager ;
+    ns:born_in ns:city_9 ;
+    ns:reports_to ns:person_85 ;
+    ns:works_at ns:company_6 .
+
+ns:person_53 a ns:Manager ;
+    ns:born_in ns:city_13 ;
+    ns:reports_to ns:person_89 ;
+    ns:works_at ns:company_1 .
+
+ns:person_54 a ns:Engineer ;
+    ns:born_in ns:city_20 ;
+    ns:reports_to ns:person_75 ;
+    ns:works_at ns:company_1 .
+
+ns:person_55 a ns:Engineer ;
+    ns:born_in ns:city_30 ;
+    ns:reports_to ns:person_56 ;
+    ns:works_at ns:company_16 .
+
+ns:person_56 a ns:Engineer ;
+    ns:born_in ns:city_3 ;
+    ns:reports_to ns:person_72 ;
+    ns:works_at ns:company_16 .
+
+ns:person_57 a ns:Engineer ;
+    ns:born_in ns:city_11 ;
+    ns:reports_to ns:person_93 ;
+    ns:works_at ns:company_2 ;
+    owl:differentFrom ns:person_71 .
+
+ns:person_59 a ns:Engineer ;
+    ns:born_in ns:city_15 ;
+    ns:reports_to ns:person_63 ;
+    ns:works_at ns:company_18 ;
+    owl:differentFrom ns:person_38 .
+
+ns:person_6 a ns:Manager ;
+    ns:born_in ns:city_5 ;
+    ns:reports_to ns:person_67 ;
+    ns:works_at ns:company_1 .
+
+ns:person_60 a ns:Engineer ;
+    ns:born_in ns:city_5 ;
+    ns:works_at ns:company_13 .
+
+ns:person_63 a ns:Manager ;
+    ns:born_in ns:city_8 ;
+    ns:reports_to ns:person_74 ;
+    ns:works_at ns:company_9 .
+
+ns:person_65 a ns:Engineer ;
+    ns:born_in ns:city_29 ;
+    ns:reports_to ns:person_50 ;
+    ns:works_at ns:company_19 .
+
+ns:person_67 a ns:Engineer ;
+    ns:born_in ns:city_32 ;
+    ns:works_at ns:company_8 .
+
+ns:person_69 a ns:Engineer ;
+    ns:born_in ns:city_23 ;
+    ns:reports_to ns:person_86 ;
+    ns:works_at ns:company_9 .
+
+ns:person_70 a ns:Engineer ;
+    ns:born_in ns:city_28 ;
+    ns:works_at ns:company_17 .
+
+ns:person_72 a ns:Manager ;
+    ns:born_in ns:city_6 ;
+    ns:reports_to ns:person_45 ;
+    ns:works_at ns:company_4 .
+
+ns:person_73 a ns:Manager ;
+    ns:born_in ns:city_7 ;
+    ns:reports_to ns:person_10 ;
+    ns:works_at ns:company_3 .
+
+ns:person_74 a ns:Engineer ;
+    ns:born_in ns:city_17 ;
+    ns:reports_to ns:person_44 ;
+    ns:works_at ns:company_9 .
+
+ns:person_75 a ns:Engineer ;
+    ns:born_in ns:city_21 ;
+    ns:works_at ns:company_6 .
+
+ns:person_76 a ns:Manager ;
+    ns:born_in ns:city_32 ;
+    ns:reports_to ns:person_37 ;
+    ns:works_at ns:company_15 .
+
+ns:person_77 a ns:Manager ;
+    ns:born_in ns:city_3 ;
+    ns:works_at ns:company_2 .
+
+ns:person_78 a ns:Manager ;
+    ns:born_in ns:city_17 ;
+    ns:reports_to ns:person_73 ;
+    ns:works_at ns:company_1 .
+
+ns:person_79 a ns:Engineer ;
+    ns:born_in ns:city_21 ;
+    ns:reports_to ns:person_43 ;
+    ns:works_at ns:company_4 .
+
+ns:person_8 a ns:Manager ;
+    ns:born_in ns:city_4 ;
+    ns:reports_to ns:person_47 ;
+    ns:works_at ns:company_12 .
+
+ns:person_83 a ns:Engineer ;
+    ns:born_in ns:city_23 ;
+    ns:reports_to ns:person_26 ;
+    ns:works_at ns:company_18 .
+
+ns:person_84 a ns:Engineer ;
+    ns:born_in ns:city_27 ;
+    ns:reports_to ns:person_77 ;
+    ns:works_at ns:company_4 .
+
+ns:person_85 a ns:Engineer ;
+    ns:born_in ns:city_19 ;
+    ns:reports_to ns:person_12 ;
+    ns:works_at ns:company_11 .
+
+ns:person_88 a ns:Manager ;
+    ns:born_in ns:city_9 ;
+    ns:reports_to ns:person_97 ;
+    ns:works_at ns:company_7 .
+
+ns:person_9 a ns:Manager ;
+    ns:born_in ns:city_29 ;
+    ns:reports_to ns:person_65 ;
+    ns:works_at ns:company_16 .
+
+ns:person_90 a ns:Engineer ;
+    ns:born_in ns:city_11 ;
+    ns:reports_to ns:person_20 ;
+    ns:works_at ns:company_10 .
+
+ns:person_91 a ns:Manager ;
+    ns:born_in ns:city_15 ;
+    ns:reports_to ns:person_9 ;
+    ns:works_at ns:company_8 .
+
+ns:person_93 a ns:Engineer ;
+    ns:born_in ns:city_30 ;
+    ns:reports_to ns:person_53 ;
+    ns:works_at ns:company_7 .
+
+ns:person_95 a ns:Manager ;
+    ns:born_in ns:city_14 ;
+    ns:works_at ns:company_7 .
+
+ns:person_97 a ns:Manager ;
+    ns:born_in ns:city_17 ;
+    ns:reports_to ns:person_4 ;
+    ns:works_at ns:company_2 .
+
+ns:Employee rdfs:subClassOf ns:Person .
+
+ns:city_19 ns:located_in ns:country_4 .
+
+ns:city_2 ns:located_in ns:country_5 .
+
+ns:city_24 ns:located_in ns:country_7 .
+
+ns:city_25 ns:located_in ns:country_7 .
+
+ns:city_26 ns:located_in ns:country_7 .
+
+ns:city_28 ns:located_in ns:country_7 .
+
+ns:city_30 ns:located_in ns:country_1 .
+
+ns:company_0 ns:hq_in ns:city_7 .
+
+ns:company_10 ns:hq_in ns:city_32 .
+
+ns:company_5 ns:hq_in ns:city_6 .
+
+ns:person_0 a ns:Engineer ;
+    ns:born_in ns:city_20 ;
+    ns:reports_to ns:person_95 ;
+    ns:works_at ns:company_6 ;
+    owl:differentFrom ns:person_98 .
+
+ns:person_12 a ns:Manager ;
+    ns:born_in ns:city_27 ;
+    ns:works_at ns:company_5 ;
+    owl:differentFrom ns:person_87 .
+
+ns:person_16 a ns:Engineer ;
+    ns:born_in ns:city_9 ;
+    ns:reports_to ns:person_38 ;
+    ns:works_at ns:company_11 ;
+    owl:differentFrom ns:person_62 .
+
+ns:person_18 a ns:Manager ;
+    ns:born_in ns:city_31 ;
+    ns:reports_to ns:person_66 ;
+    ns:works_at ns:company_0 .
+
+ns:person_22 a ns:Engineer ;
+    ns:born_in ns:city_8 ;
+    ns:reports_to ns:person_62 ;
+    ns:works_at ns:company_4 ;
+    owl:differentFrom ns:person_92 .
+
+ns:person_25 a ns:Engineer ;
+    ns:born_in ns:city_19 ;
+    ns:reports_to ns:person_71 ;
+    ns:works_at ns:company_12 .
+
+ns:person_28 a ns:Engineer ;
+    ns:born_in ns:city_4 ;
+    ns:reports_to ns:person_31 ;
+    ns:works_at ns:company_10 .
+
+ns:person_3 a ns:Engineer ;
+    ns:born_in ns:city_16 ;
+    ns:reports_to ns:person_14 ;
+    ns:works_at ns:company_18 .
+
+ns:person_30 a ns:Engineer ;
+    ns:born_in ns:city_0 ;
+    ns:reports_to ns:person_21 ;
+    ns:works_at ns:company_2 .
+
+ns:person_31 a ns:Engineer ;
+    ns:born_in ns:city_14 ;
+    ns:reports_to ns:person_35 ;
+    ns:works_at ns:company_2 ;
+    owl:differentFrom ns:person_99 .
+
+ns:person_39 a ns:Engineer ;
+    ns:born_in ns:city_6 ;
+    ns:reports_to ns:person_40 ;
+    ns:works_at ns:company_1 .
+
+ns:person_5 a ns:Engineer ;
+    ns:born_in ns:city_8 ;
+    ns:reports_to ns:person_6 ;
+    ns:works_at ns:company_16 .
+
+ns:person_61 a ns:Manager ;
+    ns:born_in ns:city_16 ;
+    ns:reports_to ns:person_60 ;
+    ns:works_at ns:company_6 ;
+    owl:differentFrom ns:person_66 .
+
+ns:person_62 a ns:Manager ;
+    ns:born_in ns:city_15 ;
+    ns:reports_to ns:person_24 ;
+    ns:works_at ns:company_8 ;
+    owl:differentFrom ns:person_16 .
+
+ns:person_66 a ns:Engineer ;
+    ns:born_in ns:city_4 ;
+    ns:reports_to ns:person_61 ;
+    ns:works_at ns:company_17 ;
+    owl:differentFrom ns:person_61 .
+
+ns:person_68 a ns:Engineer ;
+    ns:born_in ns:city_22 ;
+    ns:reports_to ns:person_22 ;
+    ns:works_at ns:company_2 ;
+    owl:differentFrom ns:person_38 .
+
+ns:person_71 a ns:Manager ;
+    ns:born_in ns:city_0 ;
+    ns:reports_to ns:person_84 ;
+    ns:works_at ns:company_17 ;
+    owl:differentFrom ns:person_57 .
+
+ns:person_81 a ns:Manager ;
+    ns:born_in ns:city_0 ;
+    ns:works_at ns:company_3 ;
+    owl:differentFrom ns:person_89 .
+
+ns:person_86 a ns:Engineer ;
+    ns:born_in ns:city_22 ;
+    ns:reports_to ns:person_13 ;
+    ns:works_at ns:company_6 .
+
+ns:person_87 a ns:Engineer ;
+    ns:born_in ns:city_6 ;
+    ns:reports_to ns:person_33 ;
+    ns:works_at ns:company_11 ;
+    owl:differentFrom ns:person_12 .
+
+ns:person_89 a ns:Engineer ;
+    ns:born_in ns:city_11 ;
+    ns:reports_to ns:person_25 ;
+    ns:works_at ns:company_13 ;
+    owl:differentFrom ns:person_81 .
+
+ns:person_92 a ns:Engineer ;
+    ns:born_in ns:city_6 ;
+    ns:reports_to ns:person_76 ;
+    ns:works_at ns:company_12 ;
+    owl:differentFrom ns:person_22 .
+
+ns:person_96 a ns:Engineer ;
+    ns:born_in ns:city_12 ;
+    ns:works_at ns:company_12 .
+
+ns:person_98 a ns:Manager ;
+    ns:born_in ns:city_22 ;
+    ns:reports_to ns:person_52 ;
+    ns:works_at ns:company_16 ;
+    owl:differentFrom ns:person_0 .
+
+ns:person_99 a ns:Manager ;
+    ns:born_in ns:city_21 ;
+    ns:reports_to ns:person_46 ;
+    ns:works_at ns:company_0 ;
+    owl:differentFrom ns:person_31 .
+
+ns:city_10 ns:located_in ns:country_4 .
+
+ns:city_13 ns:located_in ns:country_6 .
+
+ns:city_14 ns:located_in ns:country_6 .
+
+ns:city_29 ns:located_in ns:country_2 .
+
+ns:company_19 ns:hq_in ns:city_23 .
+
+ns:person_38 a ns:Manager ;
+    ns:born_in ns:city_26 ;
+    ns:works_at ns:company_14 ;
+    owl:differentFrom ns:person_59,
+        ns:person_68 .
+
+ns:city_11 ns:located_in ns:country_2 .
+
+ns:city_20 ns:located_in ns:country_4 .
+
+ns:city_22 ns:located_in ns:country_6 .
+
+ns:city_23 ns:located_in ns:country_5 .
+
+ns:city_3 ns:located_in ns:country_5 .
+
+ns:city_4 ns:located_in ns:country_1 .
+
+ns:city_5 ns:located_in ns:country_4 .
+
+ns:city_7 ns:located_in ns:country_6 .
+
+ns:company_13 ns:hq_in ns:city_12 .
+
+ns:company_9 ns:hq_in ns:city_27 .
+
+ns:city_12 ns:located_in ns:country_3 .
+
+ns:city_15 ns:located_in ns:country_2 .
+
+ns:city_17 ns:located_in ns:country_6 .
+
+ns:city_32 ns:located_in ns:country_5 .
+
+ns:city_6 ns:located_in ns:country_4 .
+
+ns:city_8 ns:located_in ns:country_5 .
+
+ns:city_9 ns:located_in ns:country_6 .
+
+ns:company_1 ns:hq_in ns:city_16 .
+
+ns:company_14 ns:hq_in ns:city_16 .
+
+ns:company_15 ns:hq_in ns:city_2 .
+
+ns:company_18 ns:hq_in ns:city_12 .
+
+ns:company_4 ns:hq_in ns:city_2 .
+
+ns:city_16 ns:located_in ns:country_4 .
+
+ns:city_21 ns:located_in ns:country_3 .
+
+ns:city_27 ns:located_in ns:country_3 .
+
+ns:company_11 ns:hq_in ns:city_7 .
+
+ns:company_16 ns:hq_in ns:city_27 .
+
+ns:company_17 ns:hq_in ns:city_0 .
+
+ns:company_6 ns:hq_in ns:city_27 .
+
+ns:company_7 ns:hq_in ns:city_22 .
+
+ns:company_8 ns:hq_in ns:city_20 .
+
+ns:city_0 ns:located_in ns:country_6 .
+
+ns:company_12 ns:hq_in ns:city_24 .
+
+ns:company_3 ns:hq_in ns:city_16 .
+
+ns:company_2 ns:hq_in ns:city_11 .
+
+ns:Manager rdfs:subClassOf ns:Employee .
+
+ns:Engineer rdfs:subClassOf ns:Employee .
+
