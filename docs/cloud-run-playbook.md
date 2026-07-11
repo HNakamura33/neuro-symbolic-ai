@@ -42,6 +42,27 @@ uv run python -m experiments.harness --dataset data/s100 --task-type claims \
 - ハング系は修正済み(Z3 30s / SPARQL 30s / closure 120s / バッファ 10MB)だが、
   1 タスク 6 分超が続いたらプロセスを確認する。
 
+### 並列化(シャーディング)— 壁時計時間の短縮
+
+harness はタスクを直列に流すため 600 タスク ≈ 4 時間超かかる。`--shard K/N` で
+1 条件を N プロセスに分割できる(タスク列の厳密な分割なので、連結結果は直列走行と
+同値。クォータ消費は不変で、**壁時計時間だけが 1/N になる**):
+
+```sh
+scripts/run_sharded.sh 3 results/metaqa-pert-B2.jsonl -- \
+  --dataset data/metaqa-perturbed --task-type qa --condition B2 --model sonnet
+```
+
+全シャード成功時のみ結果を連結する。一部失敗時は `-shardK.jsonl` が残るので、
+失敗シャードだけ `--shard K/N` で再走してから手動で cat する。
+
+**規律**: 同時実行数の上限(≤3 ストリーム)は**シャード数で数える** —
+シャード 3 本 = 3 ストリームであり、その間ほかのレーンは走らせない。
+クォータ枯渇の署名(cost 0・<5s・ツールなし)が 1 シャードでも出たら
+全シャードを止めること。プロセス内の並行化(asyncio 同時実行)は
+SIGALRM デッドラインと KB スクラッチコピーがプロセス内で共有されるため
+**やらない**(プロセス分割が唯一の安全な並列化)。
+
 ## 3. レーン定義
 
 ### レーン A: claims への B2(コード変更ゼロ、~数$)

@@ -9,7 +9,12 @@ from experiments.grade import (
     summarize,
     three_way_metrics,
 )
-from experiments.harness import build_condition_options, parse_final, render_prompt
+from experiments.harness import (
+    build_condition_options,
+    parse_final,
+    parse_shard,
+    render_prompt,
+)
 from experiments.kbgen import generate
 from nsai.tools import ALLOWED_TOOL_NAMES
 
@@ -113,6 +118,20 @@ def test_parse_final():
     assert parse_final("thinking...\nFINAL: entailed") == "entailed"
     assert parse_final("FINAL: ns:tokyo\nwait no\nFINAL: ns:osaka.") == "ns:osaka"
     assert parse_final("no answer line") is None
+
+
+def test_parse_shard_and_exact_partition():
+    assert parse_shard("0/1") == (0, 1)
+    assert parse_shard("2/3") == (2, 3)
+    for bad in ("3/3", "-1/3", "0/0", "banana", "1"):
+        with pytest.raises(SystemExit):
+            parse_shard(bad)
+    # The N shards must partition the task list exactly: every task in
+    # exactly one shard, so concatenated shard outputs equal a serial run.
+    tasks = [f"t{i}" for i in range(23)]
+    for n in (1, 2, 3, 4, 7):
+        shards = [tasks[k::n] for k in range(n)]
+        assert sorted(t for s in shards for t in s) == sorted(tasks)
 
 
 def test_gold_normalized_like_predictions():

@@ -387,14 +387,36 @@ async def run_task(
     return record
 
 
+def parse_shard(spec: str) -> tuple[int, int]:
+    """Parse a --shard "K/N" spec into (k, n); shard k of n runs tasks[k::n].
+
+    The N shards partition the task list exactly (every task in exactly one
+    shard), so N processes with distinct --out files can run concurrently and
+    their outputs be concatenated afterwards. Quota spend is unchanged; only
+    wall-clock time divides.
+    """
+    try:
+        k_str, n_str = spec.split("/", 1)
+        k, n = int(k_str), int(n_str)
+    except ValueError:
+        raise SystemExit(f"--shard expects K/N (e.g. 0/4), got {spec!r}")
+    if n < 1 or not 0 <= k < n:
+        raise SystemExit(f"--shard requires 0 <= K < N, got {spec!r}")
+    return k, n
+
+
 async def run_dataset(
     dataset: Path, task_type: str, condition: str, model: str | None,
     runs: int, limit: int | None, out: Path,
     b1p_radius: int | None = None, b1p_max_triples: int = 4000,
+    shard: tuple[int, int] | None = None,
 ) -> None:
     tasks = load_tasks(dataset, task_type)
     if limit:
         tasks = tasks[:limit]
+    if shard:
+        shard_k, shard_n = shard
+        tasks = tasks[shard_k::shard_n]
     # The audit task runs against the contradiction-injected KB copy;
     # claims/qa gold labels are only valid against the clean kb.ttl.
     kb_name = "kb-audit.ttl" if task_type == "audit" else "kb.ttl"
@@ -456,6 +478,10 @@ def main() -> None:
                     help="B1p: fixed BFS radius (default: each question's hop count)")
     ap.add_argument("--b1p-max-triples", type=int, default=4000,
                     help="B1p: context budget; farther triples are dropped first")
+    ap.add_argument("--shard", default=None, metavar="K/N",
+                    help="Run only every N-th task starting at K (0-based). "
+                         "Launch N processes with distinct --out files and "
+                         "concatenate afterwards (scripts/run_sharded.sh)")
     args = ap.parse_args()
     if args.task_type == "audit" and args.condition == "B0":
         ap.error("audit requires a KB; B0 has none (use B1/C1/C2)")
@@ -466,7 +492,8 @@ def main() -> None:
     asyncio.run(
         run_dataset(args.dataset, args.task_type, args.condition, args.model,
                     args.runs, args.limit, args.out,
-                    b1p_radius=args.b1p_radius, b1p_max_triples=args.b1p_max_triples)
+                    b1p_radius=args.b1p_radius, b1p_max_triples=args.b1p_max_triples,
+                    shard=parse_shard(args.shard) if args.shard else None)
     )
 
 
