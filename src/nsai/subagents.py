@@ -28,7 +28,7 @@ def _mcp(*names: str) -> list[str]:
     return [f"mcp__{SERVER_NAME}__{n}" for n in names]
 
 
-EXPLORER_TOOLS = _mcp("kb_find", "kb_sparql", "kb_verify", "kb_stats")
+EXPLORER_TOOLS = _mcp("kb_find", "kb_sparql", "kb_verify", "kb_check_answer", "kb_stats")
 AUDITOR_TOOLS = _mcp(
     "kb_find", "kb_sparql", "kb_verify", "kb_provenance", "kb_violations", "kb_stats"
 )
@@ -77,6 +77,12 @@ verified with kb_verify; then make the very last line of your report exactly
 with the answer entity's CURIE and nothing else on that line. If you could
 not find the answer, the last line must be exactly `FINAL: unknown`. Never
 bury the answer in prose without this FINAL line — the caller parses it.
+
+Before writing the FINAL line, pass the candidate through kb_check_answer
+(answer + the question's start entity + the final-hop relation). On reject,
+discard the candidate and resume exploring; on warn (e.g. the candidate is
+directly linked to the start entity), re-derive the full hop chain and keep
+the candidate only if every hop is verified.
 
 Typical tasks: impact analysis ("what breaks if X changes?" — walk dependency
 and contract edges transitively), root-cause analysis (walk causal edges

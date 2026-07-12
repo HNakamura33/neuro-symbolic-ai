@@ -194,6 +194,114 @@ def test_find_tags_origin_after_infer(kb: KnowledgeBase):
     assert origins["ns:Mortal"] == "inferred"
 
 
+# -- check_answer (S1 FINAL-gate) --------------------------------------------
+
+
+@pytest.fixture
+def movie_kb(tmp_path: Path) -> KnowledgeBase:
+    """Synthetic MetaQA-shaped graph: The_Matrix -> Keanu -> Speed -> 1994."""
+    kb = KnowledgeBase(tmp_path / "movies.ttl")
+    kb.add_triples(
+        [
+            ("ns:The_Matrix", "ns:directed_by", "ns:Lana_Wachowski"),
+            ("ns:The_Matrix", "ns:release_year", "ns:1999"),
+            ("ns:The_Matrix", "ns:starred_actors", "ns:Keanu_Reeves"),
+            ("ns:Speed", "ns:starred_actors", "ns:Keanu_Reeves"),
+            ("ns:Speed", "ns:release_year", "ns:1994"),
+            ("ns:Speed", "ns:directed_by", "ns:Jan_de_Bont"),
+        ]
+    )
+    return kb
+
+
+def _by_check(result):
+    return {c.check: c for c in result.checks}
+
+
+def test_check_answer_all_pass(movie_kb: KnowledgeBase):
+    # 3-hop: "when did the movies Keanu starred in come out" from The_Matrix.
+    r = movie_kb.check_answer("ns:1994", start="ns:The_Matrix", relation="ns:release_year")
+    assert r.verdict == "pass"
+    assert {c.status for c in r.checks} == {"pass"}
+
+
+def test_check_answer_rejects_fabricated_id(movie_kb: KnowledgeBase):
+    r = movie_kb.check_answer("ns:billy_chan", start="ns:The_Matrix")
+    assert r.verdict == "reject"
+    by = _by_check(r)
+    assert by["existence"].status == "reject"
+    assert "fabricated" in by["existence"].detail
+    assert by["type"].status == "skipped"  # no relation given
+
+
+def test_check_answer_rejects_miscased_id_with_hint(movie_kb: KnowledgeBase):
+    r = movie_kb.check_answer("ns:keanu_reeves")
+    assert r.verdict == "reject"
+    by = _by_check(r)
+    assert by["existence"].status == "reject"
+    assert "ns:Keanu_Reeves" in by["existence"].detail
+
+
+def test_check_answer_type_mismatch_warns(movie_kb: KnowledgeBase):
+    # A director answered to a "when was it released" question: exists in the
+    # KB, but never occurs with release_year in either position.
+    r = movie_kb.check_answer(
+        "ns:Lana_Wachowski", start="ns:Speed", relation="ns:release_year"
+    )
+    assert r.verdict == "warn"
+    assert _by_check(r)["type"].status == "warn"
+
+
+def test_check_answer_type_pass_object_and_subject_positions(movie_kb: KnowledgeBase):
+    # Object position: an actor for starred_actors.
+    r = movie_kb.check_answer("ns:Keanu_Reeves", relation="ns:starred_actors")
+    assert _by_check(r)["type"].status == "pass"
+    # Subject position (inverse-direction question): a movie for starred_actors.
+    r = movie_kb.check_answer("ns:Speed", relation="ns:starred_actors")
+    assert _by_check(r)["type"].status == "pass"
+
+
+def test_check_answer_unknown_relation_warns(movie_kb: KnowledgeBase):
+    r = movie_kb.check_answer("ns:Keanu_Reeves", relation="ns:has_genre")
+    by = _by_check(r)
+    assert by["type"].status == "warn"
+    assert "no triples" in by["type"].detail
+
+
+def test_check_answer_warns_on_one_hop_direct_answer(movie_kb: KnowledgeBase):
+    # The dominant 3-hop failure mode: answering a direct attribute of the
+    # start entity (here its own director) to a multi-hop question.
+    r = movie_kb.check_answer(
+        "ns:Lana_Wachowski", start="ns:The_Matrix", relation="ns:directed_by"
+    )
+    assert r.verdict == "warn"
+    by = _by_check(r)
+    assert by["existence"].status == "pass"
+    assert by["type"].status == "pass"  # right type, wrong provenance
+    assert by["start_exclusion"].status == "warn"
+    assert "ns:directed_by" in by["start_exclusion"].detail
+    assert "final-hop relation itself" in by["start_exclusion"].detail
+
+
+def test_check_answer_warns_on_echoed_start(movie_kb: KnowledgeBase):
+    r = movie_kb.check_answer("ns:The_Matrix", start="ns:The_Matrix")
+    assert r.verdict == "warn"
+    assert _by_check(r)["start_exclusion"].status == "warn"
+
+
+def test_check_answer_direct_link_detected_in_both_directions(movie_kb: KnowledgeBase):
+    # start appears as OBJECT of the linking triple (actor -> movie question).
+    r = movie_kb.check_answer("ns:Speed", start="ns:Keanu_Reeves")
+    assert _by_check(r)["start_exclusion"].status == "warn"
+
+
+def test_check_answer_index_invalidated_on_mutation(movie_kb: KnowledgeBase):
+    assert movie_kb.check_answer("ns:trinity").verdict == "reject"  # builds the index
+    movie_kb.add_triples([("ns:The_Matrix", "ns:starred_actors", "ns:Trinity")])
+    r = movie_kb.check_answer("ns:trinity")
+    assert "ns:Trinity" in _by_check(r)["existence"].detail
+
+
 def test_sparql_deadline_interrupts_explosive_join(tmp_path, monkeypatch):
     # A three-way unconstrained join over n triples enumerates n^3 rows in
     # pure Python; without the deadline this wedges the agent session
