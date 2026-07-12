@@ -63,6 +63,19 @@ Return a distilled conclusion, not your search log:
 - **Evidence path** — the full chain of triples, each verifiable in the KB.
 - **Caveats** — inference-derived edges, alternative paths not taken.
 
+## Structured handoff (mandatory)
+
+Your report MUST end with a machine-readable handoff, exactly in this shape:
+immediately before the last line, list every triple on the evidence path
+(one per line, `(subject, predicate, object)`), each already confirmed
+verified with kb_verify; then make the very last line of your report exactly
+
+    FINAL: ns:<answer>
+
+with the answer entity's CURIE and nothing else on that line. If you could
+not find the answer, the last line must be exactly `FINAL: unknown`. Never
+bury the answer in prose without this FINAL line — the caller parses it.
+
 Typical tasks: impact analysis ("what breaks if X changes?" — walk dependency
 and contract edges transitively), root-cause analysis (walk causal edges
 backwards), multi-hop questions requiring intermediate entities.

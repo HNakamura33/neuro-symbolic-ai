@@ -107,13 +107,21 @@ Reply with the entity CURIE only, ending with the line: FINAL: ns:<name>
 """
 
 # C2f: the delegation mandate appended to QA_TASK. Mirrors the audit
-# prompt's synchronous-delegation contract (prompt_rev 2).
+# prompt's synchronous-delegation contract (prompt_rev 2). prompt_rev 3
+# adds the structured-handoff copy rule: the subagent's FINAL line is
+# authoritative and must be copied verbatim.
 QA_DELEGATE = """\
 
 You MUST delegate the graph exploration to the symbolic-explorer subagent \
 (Task tool). Run it synchronously (run_in_background: false), wait for the \
 verified path it reports, then state the answer and the FINAL line yourself. \
 Answering without having invoked symbolic-explorer is a failure.
+
+The subagent's report ends with a line of the form `FINAL: ns:<answer>` (or \
+`FINAL: unknown`). Copy that FINAL line's value VERBATIM as your own FINAL \
+line — no paraphrasing, no reinterpretation, no substituting a different \
+candidate you consider better. Only if the subagent's report contains no \
+FINAL line may you extract the answer from the body of its report.
 """
 
 AUDIT_TASK = """\
@@ -133,7 +141,7 @@ delegation is a failure.
 """
 
 # Bump when any task prompt changes; recorded per record for reproducibility.
-PROMPT_REV = 2
+PROMPT_REV = 3
 
 
 def render_prompt(task: dict, task_type: str, condition: str, facts_ttl: str | None) -> str:
