@@ -136,6 +136,19 @@ class VerifyResult:
     detail: str
 
 
+@dataclass
+class CheckOutcome:
+    check: str  # "existence" | "type" | "start_exclusion"
+    status: str  # "pass" | "warn" | "reject" | "skipped"
+    detail: str
+
+
+@dataclass
+class CheckAnswerResult:
+    verdict: str  # "pass" | "warn" | "reject" (worst status across checks)
+    checks: list[CheckOutcome]
+
+
 class KnowledgeBase:
     """RDF graph with Turtle-file persistence and OWL-RL closure."""
 
@@ -146,6 +159,9 @@ class KnowledgeBase:
         # OWL-RL closure is recomputed only after the graph changes (~1s at
         # 5k triples, so repeated verify_triple calls need the cache).
         self._closure_cache: Graph | None = None
+        # Lowercased-IRI index for check_answer's miscasing detection;
+        # invalidated together with the closure cache on every mutation.
+        self._name_index_cache: dict[str, set[URIRef]] | None = None
         self.graph = Graph()
         for prefix, ns in _PREFIXES.items():
             self.graph.bind(prefix, ns)
@@ -180,6 +196,7 @@ class KnowledgeBase:
                 added.append(triple)
         if added:
             self._closure_cache = None
+            self._name_index_cache = None
             self.save()
             if source:
                 self._log_provenance(added, source)
@@ -228,6 +245,7 @@ class KnowledgeBase:
                 removed += 1
         if removed:
             self._closure_cache = None
+            self._name_index_cache = None
             self.save()
         return removed
 
@@ -338,6 +356,166 @@ class KnowledgeBase:
 
         return VerifyResult("unknown", "The KB neither entails nor contradicts the claim.")
 
+    def _case_variants(self, term: URIRef) -> list[URIRef]:
+        """IRIs in the graph that match `term` up to letter case (S/O positions)."""
+        if self._name_index_cache is None:
+            index: dict[str, set[URIRef]] = {}
+            for s, _, o in self.graph:
+                for node in (s, o):
+                    if isinstance(node, URIRef):
+                        index.setdefault(str(node).lower(), set()).add(node)
+            self._name_index_cache = index
+        return sorted(self._name_index_cache.get(str(term).lower(), ()), key=str)
+
+    def check_answer(
+        self, answer: str, start: str | None = None, relation: str | None = None
+    ) -> CheckAnswerResult:
+        """Deterministic FINAL-gate for QA answers (design-revision-plan §S1).
+
+        Runs three checks over the ASSERTED graph (no closure — this is a
+        surface-form and graph-shape gate, not an entailment check):
+
+        - existence:       the answer occurs in the KB at all; fabricated and
+                           miscased IDs are rejected (with the correctly-cased
+                           candidates when only the casing is off).
+        - type:            the answer occurs with the final-hop relation, in
+                           object or subject position (the KB stores one
+                           direction; questions ask both). An answer that
+                           never co-occurs with the relation is the wrong
+                           kind of entity for the question.
+        - start_exclusion: the answer is the start entity itself, or a direct
+                           one-hop neighbor of it — the dominant wrong-answer
+                           mode for multi-hop questions (~93% of 3-hop
+                           failures answer a direct attribute of the start).
+
+        The verdict is the worst status across checks; the caller (the agent)
+        makes the final judgment — warn means "re-derive the chain", not "wrong".
+        """
+        g = self.graph
+        ans = parse_term(answer, as_object=True)
+        checks: list[CheckOutcome] = []
+
+        # 1. existence
+        if isinstance(ans, Literal):
+            exists = (None, None, ans) in g
+        else:
+            exists = (ans, None, None) in g or (None, None, ans) in g
+        if exists:
+            checks.append(
+                CheckOutcome("existence", "pass", f"{format_term(ans)} occurs in the KB.")
+            )
+        else:
+            variants = self._case_variants(ans) if isinstance(ans, URIRef) else []
+            if variants:
+                hint = ", ".join(format_term(v) for v in variants[:5])
+                detail = (
+                    f"{format_term(ans)} is not in the KB, but a differently-cased "
+                    f"entity is: {hint}. Answers must match the KB's casing exactly."
+                )
+            else:
+                detail = (
+                    f"{format_term(ans)} does not occur anywhere in the KB (neither "
+                    "as subject nor as object) — likely a fabricated identifier."
+                )
+            checks.append(CheckOutcome("existence", "reject", detail))
+
+        # 2. type: does the answer occur with the final-hop relation?
+        if relation is None:
+            checks.append(CheckOutcome("type", "skipped", "No final-hop relation supplied."))
+        elif not exists:
+            checks.append(CheckOutcome("type", "skipped", "Answer failed the existence check."))
+        else:
+            rel = parse_term(relation)
+            if (None, rel, None) not in g:
+                checks.append(
+                    CheckOutcome(
+                        "type",
+                        "warn",
+                        f"Relation {format_term(rel)} has no triples in the KB — "
+                        "check the predicate name.",
+                    )
+                )
+            elif (None, rel, ans) in g:
+                checks.append(
+                    CheckOutcome(
+                        "type",
+                        "pass",
+                        f"{format_term(ans)} occurs in object position of "
+                        f"{format_term(rel)} — type-compatible with the question.",
+                    )
+                )
+            elif not isinstance(ans, Literal) and (ans, rel, None) in g:
+                checks.append(
+                    CheckOutcome(
+                        "type",
+                        "pass",
+                        f"{format_term(ans)} occurs in subject position of "
+                        f"{format_term(rel)} (inverse direction) — type-compatible "
+                        "if the question asks in that direction.",
+                    )
+                )
+            else:
+                checks.append(
+                    CheckOutcome(
+                        "type",
+                        "warn",
+                        f"{format_term(ans)} never occurs with {format_term(rel)} in "
+                        "either position — it is probably the wrong kind of entity "
+                        "for this question.",
+                    )
+                )
+
+        # 3. start exclusion: one-hop-from-start answers to multi-hop questions
+        if start is None:
+            checks.append(
+                CheckOutcome("start_exclusion", "skipped", "No start entity supplied.")
+            )
+        else:
+            st = parse_term(start)
+            if st == ans:
+                checks.append(
+                    CheckOutcome(
+                        "start_exclusion",
+                        "warn",
+                        "The answer IS the start entity. For a multi-hop question "
+                        "this is the returned-pivot failure mode; walk the chain "
+                        "instead of echoing the question's entity.",
+                    )
+                )
+            else:
+                links = set(g.predicates(st, ans))
+                if not isinstance(ans, Literal):
+                    links |= set(g.predicates(ans, st))
+                if links:
+                    names = ", ".join(sorted(format_term(p) for p in links))
+                    rel_note = (
+                        " — including the final-hop relation itself"
+                        if relation is not None and parse_term(relation) in links
+                        else ""
+                    )
+                    checks.append(
+                        CheckOutcome(
+                            "start_exclusion",
+                            "warn",
+                            f"The answer is DIRECTLY linked to the start entity via "
+                            f"{names}{rel_note}. For a multi-hop question, a one-hop "
+                            "attribute of the start is the dominant wrong-answer "
+                            "mode; re-derive the full hop chain before trusting it.",
+                        )
+                    )
+                else:
+                    checks.append(
+                        CheckOutcome(
+                            "start_exclusion",
+                            "pass",
+                            "The answer is not a direct neighbor of the start entity.",
+                        )
+                    )
+
+        rank = {"reject": 2, "warn": 1}
+        worst = max(rank.get(c.status, 0) for c in checks)
+        return CheckAnswerResult({2: "reject", 1: "warn", 0: "pass"}[worst], checks)
+
     # -- export / import -------------------------------------------------------
 
     def export(self, dest: Path, fmt: str = "turtle") -> None:
@@ -352,6 +530,7 @@ class KnowledgeBase:
         added = len(self.graph) - before
         if added:
             self._closure_cache = None
+            self._name_index_cache = None
             self.save()
         return added
 

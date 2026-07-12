@@ -106,6 +106,28 @@ Question: {question}
 Reply with the entity CURIE only, ending with the line: FINAL: ns:<name>
 """
 
+# S4 (design-revision-plan): verify-before-FINAL contract, appended for the
+# symbolic-tool conditions (C1/C2/C2f) only. kb_verify is protective
+# (+9-12 pt when used) but its usage falls with hop count exactly where it
+# matters (49% at 1-hop -> 12% at 3-hop), so the check is a protocol step,
+# not advice. prompt_rev 5.
+QA_VERIFY = """\
+
+Before emitting the FINAL line you MUST run this verification protocol:
+(a) kb_verify the final-hop triple your answer rests on (the triple linking \
+your last intermediate entity to the answer). If the verdict is not \
+"entailed", the chain is broken — resume exploring instead of answering.
+(b) Pass the candidate through kb_check_answer, giving the question's start \
+entity and the final-hop relation. If it REJECTS, discard the candidate and \
+resume exploring. If it WARNS (e.g. the candidate is directly linked to the \
+start entity), re-derive the full hop chain hop by hop and keep the \
+candidate only if every hop checks out — in a multi-hop question, an entity \
+one hop from the start is almost always the wrong answer.
+If a rejected/warned candidate came from a delegated subagent, re-invoke the \
+subagent with the failure reason instead of exploring yourself. Only a \
+candidate that passes both steps may appear on the FINAL line.
+"""
+
 # C2f: the delegation mandate appended to QA_TASK. Mirrors the audit
 # prompt's synchronous-delegation contract (prompt_rev 2). prompt_rev 3
 # adds the structured-handoff copy rule: the subagent's FINAL line is
@@ -141,7 +163,8 @@ delegation is a failure.
 """
 
 # Bump when any task prompt changes; recorded per record for reproducibility.
-PROMPT_REV = 3
+# 5 = S1 kb_check_answer + S4 verify-before-FINAL (Lane F; 4 is Lane E).
+PROMPT_REV = 5
 
 
 def render_prompt(task: dict, task_type: str, condition: str, facts_ttl: str | None) -> str:
@@ -167,6 +190,10 @@ def render_prompt(task: dict, task_type: str, condition: str, facts_ttl: str | N
         body = QA_TASK.format(source_hint=source_hint, question=task["question"])
         if condition == "C2f":
             body += QA_DELEGATE
+        if condition in ("C1", "C2", "C2f"):
+            # Symbolic-tool conditions only: B0/B1/B1p/B2 have no kb_* tools,
+            # so the contract would be unsatisfiable noise there.
+            body += QA_VERIFY
     else:
         body = AUDIT_TASK.format(source_hint=source_hint)
     if condition in ("B1", "B1p") and facts_ttl:

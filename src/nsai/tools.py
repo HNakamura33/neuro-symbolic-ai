@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import asdict
 from typing import Any
 
 from claude_agent_sdk import create_sdk_mcp_server, tool
@@ -126,6 +127,48 @@ async def kb_verify(args: dict[str, Any]) -> dict[str, Any]:
 
 
 @tool(
+    "kb_check_answer",
+    "Deterministic sanity gate for a candidate FINAL answer to a knowledge-graph "
+    "question. Runs three checks against the KB and returns verdict pass | warn | "
+    "reject with per-check reasons: (1) existence — the answer actually occurs in "
+    "the KB (fabricated or wrongly-cased IDs are rejected, with the correctly-cased "
+    "candidates suggested); (2) type — the answer occurs with the given final-hop "
+    "relation, i.e. it is the right kind of entity for the question; (3) "
+    "start-exclusion — warns when the answer is the question's start entity or a "
+    "direct one-hop neighbor of it, the dominant wrong-answer mode in multi-hop "
+    "questions. Treat reject as 'discard and keep exploring' and warn as "
+    "'re-derive the full hop chain before trusting this answer'.",
+    {
+        "type": "object",
+        "properties": {
+            "answer": {
+                "type": "string",
+                "description": "Candidate answer as a CURIE or literal (e.g. ns:Some_Entity).",
+            },
+            "start": {
+                "type": "string",
+                "description": "The question's start entity (CURIE).",
+            },
+            "relation": {
+                "type": "string",
+                "description": "The final-hop predicate expected to link to the answer "
+                "(e.g. ns:release_year for a 'when was ... released' question).",
+            },
+        },
+        "required": ["answer"],
+    },
+)
+async def kb_check_answer(args: dict[str, Any]) -> dict[str, Any]:
+    try:
+        r = _kb_or_err().check_answer(
+            args["answer"], start=args.get("start"), relation=args.get("relation")
+        )
+        return _text({"verdict": r.verdict, "checks": [asdict(c) for c in r.checks]})
+    except TermParseError as e:
+        return _text(f"Term parse error: {e}", is_error=True)
+
+
+@tool(
     "kb_infer",
     "Materialize all RDFS/OWL-RL inferred triples into the knowledge graph.",
     {"type": "object", "properties": {}},
@@ -232,6 +275,7 @@ ALL_TOOLS = [
     kb_find,
     kb_sparql,
     kb_verify,
+    kb_check_answer,
     kb_infer,
     kb_stats,
     kb_provenance,
