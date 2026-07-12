@@ -140,8 +140,16 @@ complete findings and the FINAL line yourself. A reply that only describes the \
 delegation is a failure.
 """
 
+# Appended to AUDIT_TASK under the symbolic-tool conditions only (prompt_rev 4):
+# a pointer, not a recipe — the agent still decides how to audit.
+AUDIT_TOOL_HINT = """\
+
+The kb_violations tool enumerates functional-property violations over the \
+asserted (pre-inference) triples in one call.
+"""
+
 # Bump when any task prompt changes; recorded per record for reproducibility.
-PROMPT_REV = 3
+PROMPT_REV = 4
 
 
 def render_prompt(task: dict, task_type: str, condition: str, facts_ttl: str | None) -> str:
@@ -169,6 +177,8 @@ def render_prompt(task: dict, task_type: str, condition: str, facts_ttl: str | N
             body += QA_DELEGATE
     else:
         body = AUDIT_TASK.format(source_hint=source_hint)
+        if condition in ("C1", "C2"):  # tool conditions only; B1/B2 have no kb_* tools
+            body += AUDIT_TOOL_HINT
     if condition in ("B1", "B1p") and facts_ttl:
         body += f"\n--- KNOWLEDGE BASE (Turtle) ---\n{facts_ttl}\n"
     return body

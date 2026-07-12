@@ -155,7 +155,7 @@ rev2 の正答 462 + 今回の正答で再計算できる(0.86 前後の見込�
 for g in a500c5 a500c20 a2000c5 a2000c20; do
   for c in C1 C2; do
     uv run python -m experiments.harness --dataset data/$g --task-type audit \
-      --condition $c --runs 3 --out results/audit-$g-$c-rev3.jsonl
+      --condition $c --runs 3 --out results/audit-$g-$c-rev4.jsonl
   done
 done
 ```

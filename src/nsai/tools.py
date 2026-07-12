@@ -8,7 +8,7 @@ from typing import Any
 from claude_agent_sdk import create_sdk_mcp_server, tool
 
 from .csp import solve_csp
-from .kb import KnowledgeBase, TermParseError
+from .kb import KnowledgeBase, QueryTimeout, TermParseError
 from .smt import smt_verify as _smt_verify
 
 SERVER_NAME = "symbolic"
@@ -72,7 +72,9 @@ async def kb_add_triples(args: dict[str, Any]) -> dict[str, Any]:
 
 @tool(
     "kb_find",
-    "Pattern-match triples in the knowledge graph. Omit a field to use it as a wildcard.",
+    "Pattern-match triples in the knowledge graph. Omit a field to use it as a wildcard. "
+    "After kb_infer has run, each match carries a fourth element tagging it "
+    "'asserted' or 'inferred'.",
     {
         "type": "object",
         "properties": {
@@ -84,12 +86,15 @@ async def kb_add_triples(args: dict[str, Any]) -> dict[str, Any]:
     },
 )
 async def kb_find(args: dict[str, Any]) -> dict[str, Any]:
+    kb = _kb_or_err()
     try:
-        rows = _kb_or_err().find(
+        rows = kb.find(
             subject=args.get("subject"),
             predicate=args.get("predicate"),
             obj=args.get("object"),
             limit=args.get("limit", 50),
+            # Tagging is only informative once inferred triples are mixed in.
+            with_origin=kb.inferred_triple_count > 0,
         )
         return _text({"matches": [list(r) for r in rows], "count": len(rows)})
     except TermParseError as e:
@@ -127,12 +132,28 @@ async def kb_verify(args: dict[str, Any]) -> dict[str, Any]:
 
 @tool(
     "kb_infer",
-    "Materialize all RDFS/OWL-RL inferred triples into the knowledge graph.",
+    "Materialize all RDFS/OWL-RL inferred triples into the knowledge graph. "
+    "Unsound on a KB that contains contradictions — use kb_violations to audit those.",
     {"type": "object", "properties": {}},
 )
 async def kb_infer(args: dict[str, Any]) -> dict[str, Any]:
     added = _kb_or_err().infer()
-    return _text({"inferred_triples_added": added, "total_triples": _kb_or_err().stats()["triples"]})
+    return _text(
+        {
+            "inferred_triples_added": added,
+            "total_triples": _kb_or_err().stats()["triples"],
+            "warning": (
+                "If the KB contains contradictions, this closure is unsound: a "
+                "functional-property conflict entails owl:sameAs between the "
+                "conflicting objects, and the resulting sameAs chains merge "
+                "unrelated entities, mass-producing spurious 'violations' and "
+                "facts. Do not report closure-derived conflicts as findings — "
+                "use kb_violations, which enumerates functional-property "
+                "violations over the asserted triples only. Subsequent kb_find "
+                "results tag each triple asserted vs inferred."
+            ),
+        }
+    )
 
 
 @tool(
@@ -196,6 +217,23 @@ async def kb_provenance(args: dict[str, Any]) -> dict[str, Any]:
 
 
 @tool(
+    "kb_violations",
+    "Enumerate ALL functional-property violations in one call, computed over the "
+    "asserted triples only (pre-inference), each with the provenance records of "
+    "every conflicting value. Prefer this over closure-based sweeps for "
+    "contradiction audits: OWL-RL inference on a contradictory KB merges entities "
+    "through owl:sameAs chains and manufactures spurious conflicts.",
+    {"type": "object", "properties": {}},
+)
+async def kb_violations(args: dict[str, Any]) -> dict[str, Any]:
+    try:
+        violations = _kb_or_err().functional_violations()
+        return _text({"violations": violations, "count": len(violations)})
+    except QueryTimeout as e:
+        return _text(str(e), is_error=True)
+
+
+@tool(
     "smt_verify",
     "Prove or refute a numeric/boolean claim with the Z3 theorem prover. "
     "Declare typed variables (int | real | bool), give assumptions as python-style "
@@ -235,6 +273,7 @@ ALL_TOOLS = [
     kb_infer,
     kb_stats,
     kb_provenance,
+    kb_violations,
     csp_solve,
     smt_verify,
 ]

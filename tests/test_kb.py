@@ -118,6 +118,82 @@ def test_closure_cache_reused_and_invalidated(kb: KnowledgeBase):
     assert kb.closure() is not second
 
 
+def test_functional_violations_clean_kb(kb: KnowledgeBase):
+    kb.add_triples(
+        [
+            ("ns:born_in", "rdf:type", "owl:FunctionalProperty"),
+            ("ns:alice", "ns:born_in", "ns:tokyo"),
+            ("ns:bob", "ns:born_in", "ns:osaka"),
+            ("ns:alice", "ns:likes", "ns:sushi"),  # non-functional, multi-valued OK
+            ("ns:alice", "ns:likes", "ns:tea"),
+        ]
+    )
+    assert kb.functional_violations() == []
+
+
+def test_functional_violations_found_with_provenance(kb: KnowledgeBase):
+    kb.add_triples(
+        [
+            ("ns:born_in", "rdf:type", "owl:FunctionalProperty"),
+            ("ns:alice", "ns:born_in", "ns:tokyo"),
+        ],
+        source="census.txt",
+    )
+    kb.add_triples([("ns:alice", "ns:born_in", "ns:osaka")], source="injected")
+    violations = kb.functional_violations()
+    assert len(violations) == 1
+    v = violations[0]
+    assert (v["subject"], v["predicate"]) == ("ns:alice", "ns:born_in")
+    by_object = {entry["object"]: entry["provenance"] for entry in v["objects"]}
+    assert set(by_object) == {"ns:tokyo", "ns:osaka"}
+    assert by_object["ns:tokyo"][0]["source"] == "census.txt"
+    assert by_object["ns:osaka"][0]["source"] == "injected"
+
+
+def test_functional_violations_pre_closure_no_sameas_cascade(kb: KnowledgeBase):
+    # Under OWL-RL, the alice conflict entails tokyo sameAs osaka, which
+    # (via the sameAs aliases) would also make carol and dave look
+    # conflicted — the exact cascade that collapsed audit precision. The
+    # asserted-only sweep must report the one real conflict, before and
+    # after the closure is materialized.
+    kb.add_triples(
+        [
+            ("ns:born_in", "rdf:type", "owl:FunctionalProperty"),
+            ("ns:alice", "ns:born_in", "ns:tokyo"),
+            ("ns:alice", "ns:born_in", "ns:osaka"),
+            ("ns:carol", "ns:born_in", "ns:tokyo"),
+            ("ns:dave", "ns:born_in", "ns:osaka"),
+            ("ns:carol2", "owl:sameAs", "ns:carol"),
+        ]
+    )
+    def pairs():
+        return [(v["subject"], v["predicate"]) for v in kb.functional_violations()]
+
+    assert pairs() == [("ns:alice", "ns:born_in")]
+    kb.infer()  # materializing the (unsound) closure must not change the sweep
+    assert pairs() == [("ns:alice", "ns:born_in")]
+
+
+def test_find_tags_origin_after_infer(kb: KnowledgeBase):
+    kb.add_triples(
+        [
+            ("ns:socrates", "rdf:type", "ns:Human"),
+            ("ns:Human", "rdfs:subClassOf", "ns:Mortal"),
+        ]
+    )
+    # Before inference the plain 3-tuple shape is unchanged.
+    assert kb.find(subject="ns:socrates", predicate="rdf:type") == [
+        ("ns:socrates", "rdf:type", "ns:Human")
+    ]
+    assert kb.inferred_triple_count == 0
+    kb.infer()
+    assert kb.inferred_triple_count > 0
+    rows = kb.find(subject="ns:socrates", predicate="rdf:type", with_origin=True)
+    origins = {r[2]: r[3] for r in rows}
+    assert origins["ns:Human"] == "asserted"
+    assert origins["ns:Mortal"] == "inferred"
+
+
 def test_sparql_deadline_interrupts_explosive_join(tmp_path, monkeypatch):
     # A three-way unconstrained join over n triples enumerates n^3 rows in
     # pure Python; without the deadline this wedges the agent session

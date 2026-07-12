@@ -196,8 +196,14 @@ def test_audit_task_loading_and_prompt(tmp_path: Path):
     assert tasks == [{"id": "audit-0", "gold_pairs": ["ns:a|ns:born_in", "ns:b|ns:hq_in"]}]
     prompt = render_prompt(tasks[0], "audit", "C1", None)
     assert "FINAL:" in prompt and "symbolic tools" in prompt
+    # prompt_rev 4: the tool conditions get the kb_violations pointer...
+    assert "kb_violations" in prompt
+    assert "kb_violations" in render_prompt(tasks[0], "audit", "C2", None)
     b1 = render_prompt(tasks[0], "audit", "B1", "ttl-content-here")
     assert "ttl-content-here" in b1
+    # ...but the tool-less baselines must not be told about a tool they lack.
+    assert "kb_violations" not in b1
+    assert "kb_violations" not in render_prompt(tasks[0], "audit", "B2", None)
 
 
 # ---------------------------------------------------------------------------

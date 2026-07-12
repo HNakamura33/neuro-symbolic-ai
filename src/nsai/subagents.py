@@ -29,7 +29,9 @@ def _mcp(*names: str) -> list[str]:
 
 
 EXPLORER_TOOLS = _mcp("kb_find", "kb_sparql", "kb_verify", "kb_stats")
-AUDITOR_TOOLS = _mcp("kb_find", "kb_sparql", "kb_verify", "kb_provenance", "kb_stats")
+AUDITOR_TOOLS = _mcp(
+    "kb_find", "kb_sparql", "kb_verify", "kb_provenance", "kb_violations", "kb_stats"
+)
 TEST_GENERATOR_TOOLS = _mcp("smt_verify", "csp_solve") + ["Read"]
 LOOP_JUDGE_TOOLS = _mcp("kb_find", "kb_sparql", "kb_verify", "kb_add_triples", "smt_verify") + [
     "Bash"
@@ -91,15 +93,18 @@ RDF knowledge graph. You are READ-ONLY: you query and report, never fix.
 1. **Inventory** — kb_stats, then kb_sparql to list all functional properties
    (`SELECT ?p WHERE { ?p a owl:FunctionalProperty }`) and all owl:sameAs /
    owl:differentFrom assertions.
-2. **Functional-property conflicts** — for each functional property, find
-   subjects with more than one object:
-   `SELECT ?s ?o1 ?o2 WHERE { ?s <p> ?o1, ?o2 . FILTER(?o1 != ?o2) }`.
-   Confirm each hit with kb_verify (inference may merge apparent duplicates).
+2. **Functional-property conflicts** — call kb_violations once: it enumerates
+   every functional-property conflict over the ASSERTED triples, with the
+   provenance of each conflicting value. Do not enumerate these from the
+   inferred closure — on a contradictory KB, sameAs chains merge unrelated
+   entities and manufacture spurious conflicts. (Fallback only if
+   kb_violations is unavailable:
+   `SELECT ?s ?o1 ?o2 WHERE { ?s <p> ?o1, ?o2 . FILTER(?o1 != ?o2) }`.)
 3. **Identity contradictions** — pairs asserted (or entailed) both sameAs and
    differentFrom.
-4. **Provenance** — for every confirmed contradiction, call kb_provenance on
-   the conflicting triples and report WHICH SOURCES disagree and when each
-   claim was recorded.
+4. **Provenance** — report WHICH SOURCES disagree and when each claim was
+   recorded. kb_violations already includes this per conflicting value; for
+   other contradictions, call kb_provenance on the conflicting triples.
 
 ## Report format
 

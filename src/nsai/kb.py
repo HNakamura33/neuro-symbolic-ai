@@ -146,6 +146,9 @@ class KnowledgeBase:
         # OWL-RL closure is recomputed only after the graph changes (~1s at
         # 5k triples, so repeated verify_triple calls need the cache).
         self._closure_cache: Graph | None = None
+        # Triples materialized by infer() rather than asserted; lets query
+        # results distinguish asserted from inferred after materialization.
+        self._inferred_triples: set[tuple[Node, Node, Node]] = set()
         self.graph = Graph()
         for prefix, ns in _PREFIXES.items():
             self.graph.bind(prefix, ns)
@@ -205,15 +208,18 @@ class KnowledgeBase:
             format_term(parse_term(p)),
             format_term(parse_term(o, as_object=True)),
         )
+        return self._provenance_index().get(key, [])
+
+    def _provenance_index(self) -> dict[tuple[str, str, str], list[dict[str, str]]]:
+        """All provenance records grouped by (s, p, o) in format_term form."""
+        index: dict[tuple[str, str, str], list[dict[str, str]]] = {}
         if not self.prov_path.exists():
-            return []
-        hits = []
+            return index
         with self.prov_path.open(encoding="utf-8") as f:
             for line in f:
                 rec = json.loads(line)
-                if (rec["s"], rec["p"], rec["o"]) == key:
-                    hits.append(rec)
-        return hits
+                index.setdefault((rec["s"], rec["p"], rec["o"]), []).append(rec)
+        return index
 
     def remove_triples(self, triples: list[tuple[str, str, str]]) -> int:
         removed = 0
@@ -258,14 +264,23 @@ class KnowledgeBase:
         predicate: str | None = None,
         obj: str | None = None,
         limit: int = 50,
-    ) -> list[tuple[str, str, str]]:
-        """Pattern-match triples; None acts as a wildcard."""
+        with_origin: bool = False,
+    ) -> list[tuple[str, ...]]:
+        """Pattern-match triples; None acts as a wildcard.
+
+        With `with_origin`, each row carries a fourth element tagging whether
+        the triple was asserted or materialized by infer() ("asserted" |
+        "inferred") — only meaningful after infer() has run.
+        """
         s = parse_term(subject) if subject else None
         p = parse_term(predicate) if predicate else None
         o = parse_term(obj, as_object=True) if obj else None
-        out = []
-        for ts, tp, to in self.graph.triples((s, p, o)):
-            out.append((format_term(ts), format_term(tp), format_term(to)))
+        out: list[tuple[str, ...]] = []
+        for triple in self.graph.triples((s, p, o)):
+            row = tuple(format_term(t) for t in triple)
+            if with_origin:
+                row += ("inferred" if triple in self._inferred_triples else "asserted",)
+            out.append(row)
             if len(out) >= limit:
                 break
         return out
@@ -299,11 +314,69 @@ class KnowledgeBase:
         before = len(self.graph)
         expanded = self.closure()
         for triple in expanded:
-            self.graph.add(triple)
+            if triple not in self.graph:
+                self.graph.add(triple)
+                self._inferred_triples.add(triple)
         added = len(self.graph) - before
         if added:
             self.save()
         return added
+
+    @property
+    def inferred_triple_count(self) -> int:
+        """How many triples in the graph were materialized by infer()."""
+        return len(self._inferred_triples)
+
+    def functional_violations(self) -> list[dict]:
+        """Enumerate functional-property violations over ASSERTED triples only.
+
+        Deliberately pre-closure: on a KB that contains contradictions,
+        OWL-RL closure entails owl:sameAs between the conflicting objects of
+        a functional property, and the resulting sameAs chains merge
+        unrelated entities — manufacturing spurious violations that did not
+        appear in what anyone actually asserted (observed on the audit KBs:
+        5 injected conflicts ballooned to 95 closure-level ones). Asserted-
+        only enumeration keeps every conflict attributable to concrete
+        triples, each returned with its provenance records.
+        """
+        prov_index = self._provenance_index()
+        violations: list[dict] = []
+        # infer() materializes the closure into self.graph, so "asserted"
+        # means "not tracked as inferred" — the sweep must stay identical
+        # before and after a kb_infer call in the same session.
+        inferred = self._inferred_triples
+        with _deadline(
+            SPARQL_TIMEOUT_S,
+            "Violation sweep exceeded {}s; the KB is too large for a full "
+            "functional-property scan. Use kb_find per predicate instead.",
+        ):
+            for prop in sorted(self.graph.subjects(RDF.type, OWL.FunctionalProperty)):
+                if (prop, RDF.type, OWL.FunctionalProperty) in inferred:
+                    continue
+                by_subject: dict[Node, set[Node]] = {}
+                for s, o in self.graph.subject_objects(prop):
+                    if (s, prop, o) in inferred:
+                        continue
+                    by_subject.setdefault(s, set()).add(o)
+                for s, objects in by_subject.items():
+                    if len(objects) < 2:
+                        continue
+                    fs, fp = format_term(s), format_term(prop)
+                    violations.append(
+                        {
+                            "subject": fs,
+                            "predicate": fp,
+                            "objects": [
+                                {
+                                    "object": fo,
+                                    "provenance": prov_index.get((fs, fp, fo), []),
+                                }
+                                for fo in sorted(format_term(o) for o in objects)
+                            ],
+                        }
+                    )
+        violations.sort(key=lambda v: (v["subject"], v["predicate"]))
+        return violations
 
     def verify_triple(self, s: str, p: str, o: str) -> VerifyResult:
         """Check one claim against the KB + inference.
