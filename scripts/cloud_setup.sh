@@ -8,7 +8,12 @@ cd "$(git rev-parse --show-toplevel)"
 
 echo "== 1/4 実験データ (origin/data-snapshot) =="
 git fetch origin data-snapshot
-git restore --source=origin/data-snapshot --worktree -- data/
+# スナップショットに存在するディレクトリだけを個別に復元する。
+# 「-- data/」一括だと、スナップショットに無い追跡済みファイル(data/dev 等)が
+# worktree 上で削除扱いになる(レーン C で実測)。
+git ls-tree --name-only origin/data-snapshot data/ | while read -r d; do
+  git restore --source=origin/data-snapshot --worktree -- "$d"
+done
 # 注意: data/ は untracked のまま維持する。作業ブランチに git add しないこと
 # (.gitignore の kb.ttl ルールで一部だけ落ちる事故のもと)。
 
