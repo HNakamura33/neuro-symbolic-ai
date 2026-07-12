@@ -9,7 +9,7 @@ from typing import Any
 from claude_agent_sdk import create_sdk_mcp_server, tool
 
 from .csp import solve_csp
-from .kb import KnowledgeBase, QueryTimeout, TermParseError
+from .kb import MAX_PATH_TERMINALS, KnowledgeBase, QueryTimeout, TermParseError
 from .smt import smt_verify as _smt_verify
 
 SERVER_NAME = "symbolic"
@@ -100,6 +100,64 @@ async def kb_find(args: dict[str, Any]) -> dict[str, Any]:
         return _text({"matches": [list(r) for r in rows], "count": len(rows)})
     except TermParseError as e:
         return _text(f"Term parse error: {e}", is_error=True)
+
+
+@tool(
+    "kb_path",
+    "Walk a predicate chain through the knowledge graph from a start entity, "
+    "deterministically, in ONE call. For a MULTI-HOP question, first map the "
+    "question to its predicate chain, then call kb_path instead of looping "
+    "kb_find hop by hop — e.g. 'who directed the movies X's actors starred in' "
+    "-> start=ns:X, relations=[ns:starred_actors, ns:starred_actors, "
+    "ns:directed_by]. Each hop automatically follows the predicate in BOTH "
+    "directions (the KB stores each fact once; questions ask both ways); prefix "
+    "a relation with '^' to restrict that hop to the inverse direction. Returns "
+    "the terminal entity set plus every edge traversed per hop — each edge is a "
+    "real KB triple labeled forward/inverse, usable directly as the evidence "
+    "path. The start entity is excluded from the terminals by default and "
+    "reported under 'excluded' (set exclude_start=false to keep it).",
+    {
+        "type": "object",
+        "properties": {
+            "start": {
+                "type": "string",
+                "description": "Start entity CURIE (e.g. ns:Some_Movie).",
+            },
+            "relations": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Predicate chain, one entry per hop, in question "
+                "order (e.g. [\"ns:starred_actors\", \"ns:directed_by\"]). "
+                "Prefix an entry with '^' to walk only the inverse direction.",
+            },
+            "exclude_start": {
+                "type": "boolean",
+                "default": True,
+                "description": "Drop the start entity from the terminal set "
+                "(multi-hop answer convention).",
+            },
+            "max_terminals": {
+                "type": "integer",
+                "default": MAX_PATH_TERMINALS,
+                "description": "Cap on returned terminal entities.",
+            },
+        },
+        "required": ["start", "relations"],
+    },
+)
+async def kb_path(args: dict[str, Any]) -> dict[str, Any]:
+    try:
+        r = _kb_or_err().traverse_path(
+            args["start"],
+            list(args["relations"]),
+            exclude_start=args.get("exclude_start", True),
+            max_terminals=args.get("max_terminals", MAX_PATH_TERMINALS),
+        )
+        return _text(asdict(r))
+    except ValueError as e:  # includes TermParseError
+        return _text(f"kb_path error: {e}", is_error=True)
+    except QueryTimeout as e:
+        return _text(str(e), is_error=True)
 
 
 @tool(
@@ -311,6 +369,7 @@ async def smt_verify(args: dict[str, Any]) -> dict[str, Any]:
 ALL_TOOLS = [
     kb_add_triples,
     kb_find,
+    kb_path,
     kb_sparql,
     kb_verify,
     kb_check_answer,

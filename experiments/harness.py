@@ -106,6 +106,20 @@ Question: {question}
 Reply with the entity CURIE only, ending with the line: FINAL: ns:<name>
 """
 
+# S2 (design-revision-plan): symbolic path traversal, appended for the
+# symbolic-tool conditions (C1/C2/C2f) only. ~93% of 3-hop failures start
+# from a per-hop misread inside kb_find loops; kb_path moves the walk to the
+# deterministic side and shrinks the neural role to question ->
+# predicate-chain mapping. prompt_rev 6.
+QA_PATH = """\
+
+For a multi-hop question, first map the question to its predicate chain, then \
+walk the whole chain with a single kb_path call (start entity + relation \
+list) instead of looping kb_find hop by hop — kb_path follows both edge \
+directions automatically and returns the terminal entities plus the actual \
+edges traversed. Use that returned edge list as the evidence for your answer.
+"""
+
 # S4 (design-revision-plan): verify-before-FINAL contract, appended for the
 # symbolic-tool conditions (C1/C2/C2f) only. kb_verify is protective
 # (+9-12 pt when used) but its usage falls with hop count exactly where it
@@ -171,8 +185,9 @@ asserted (pre-inference) triples in one call.
 """
 
 # Bump when any task prompt changes; recorded per record for reproducibility.
-# 4 = S3 kb_violations (Lane E); 5 = S1 kb_check_answer + S4 verify-before-FINAL (Lane F).
-PROMPT_REV = 5
+# 4 = S3 kb_violations (Lane E); 5 = S1 kb_check_answer + S4 verify-before-FINAL (Lane F);
+# 6 = S2 kb_path symbolic traversal (Lane S2).
+PROMPT_REV = 6
 
 
 def render_prompt(task: dict, task_type: str, condition: str, facts_ttl: str | None) -> str:
@@ -201,7 +216,7 @@ def render_prompt(task: dict, task_type: str, condition: str, facts_ttl: str | N
         if condition in ("C1", "C2", "C2f"):
             # Symbolic-tool conditions only: B0/B1/B1p/B2 have no kb_* tools,
             # so the contract would be unsatisfiable noise there.
-            body += QA_VERIFY
+            body += QA_PATH + QA_VERIFY
     else:
         body = AUDIT_TASK.format(source_hint=source_hint)
         if condition in ("C1", "C2"):  # tool conditions only; B1/B2 have no kb_* tools

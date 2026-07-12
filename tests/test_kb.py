@@ -320,3 +320,117 @@ def test_sparql_deadline_interrupts_explosive_join(tmp_path, monkeypatch):
     assert time.monotonic() - t0 < 10
     # The KB stays usable after the interrupt.
     assert kb.sparql("ASK { ns:s0 ns:p ns:o0 }") is True
+
+
+# -- traverse_path (S2 kb_path) -----------------------------------------------
+
+
+def _hop_edges(hop):
+    return [(e.subject, e.predicate, e.object, e.direction) for e in hop.edges]
+
+
+def test_traverse_path_two_hop_forward(kb: KnowledgeBase):
+    kb.add_triples(
+        [
+            ("ns:a", "ns:p", "ns:b"),
+            ("ns:b", "ns:q", "ns:c"),
+        ]
+    )
+    r = kb.traverse_path("ns:a", ["ns:p", "ns:q"])
+    assert r.terminals == ["ns:c"]
+    assert not r.terminals_truncated and r.excluded == []
+    assert _hop_edges(r.hops[0]) == [("ns:a", "ns:p", "ns:b", "forward")]
+    assert _hop_edges(r.hops[1]) == [("ns:b", "ns:q", "ns:c", "forward")]
+
+
+def test_traverse_path_chain_with_inverse_hop(movie_kb: KnowledgeBase):
+    # "when were the movies Keanu starred in released": starred_actors must be
+    # walked INVERSE (the KB stores movie -> actor), then release_year forward.
+    r = movie_kb.traverse_path("ns:Keanu_Reeves", ["ns:starred_actors", "ns:release_year"])
+    assert r.terminals == ["ns:1994", "ns:1999"]
+    # Every returned edge is a real KB triple, labeled with its direction.
+    assert _hop_edges(r.hops[0]) == [
+        ("ns:Speed", "ns:starred_actors", "ns:Keanu_Reeves", "inverse"),
+        ("ns:The_Matrix", "ns:starred_actors", "ns:Keanu_Reeves", "inverse"),
+    ]
+    assert all(e.direction == "forward" for e in r.hops[1].edges)
+    assert r.hops[0].frontier_size == 2
+
+
+def test_traverse_path_exclude_start(movie_kb: KnowledgeBase):
+    # "other movies starring The_Matrix's actors" must not answer The_Matrix.
+    chain = ["ns:starred_actors", "ns:starred_actors"]
+    r = movie_kb.traverse_path("ns:The_Matrix", chain)
+    assert r.terminals == ["ns:Speed"]
+    assert r.excluded == ["ns:The_Matrix"]
+    assert any("exclude_start" in n for n in r.notes)
+    # Opting out keeps the start entity in the terminals.
+    r = movie_kb.traverse_path("ns:The_Matrix", chain, exclude_start=False)
+    assert r.terminals == ["ns:Speed", "ns:The_Matrix"]
+    assert r.excluded == []
+
+
+def test_traverse_path_start_excluded_from_terminals_only(movie_kb: KnowledgeBase):
+    # 3-hop through the start: exclude_start drops the start from the TERMINAL
+    # set only — intermediate hops may pass through it, so the start's own
+    # director stays reachable (MetaQA gold sets include such answers).
+    r = movie_kb.traverse_path(
+        "ns:The_Matrix", ["ns:starred_actors", "ns:starred_actors", "ns:directed_by"]
+    )
+    assert r.terminals == ["ns:Jan_de_Bont", "ns:Lana_Wachowski"]
+
+
+def test_traverse_path_unknown_predicate_is_explicit(movie_kb: KnowledgeBase):
+    r = movie_kb.traverse_path("ns:The_Matrix", ["ns:has_genre"])
+    assert r.terminals == []
+    assert r.hops[0].edges == [] and r.hops[0].frontier_size == 0
+    assert any("ns:has_genre has no triples" in n for n in r.notes)
+    assert any("no matching edges" in n for n in r.notes)
+
+
+def test_traverse_path_dead_end_stops_traversal(movie_kb: KnowledgeBase):
+    r = movie_kb.traverse_path("ns:The_Matrix", ["ns:has_genre", "ns:release_year"])
+    assert r.terminals == []
+    assert len(r.hops) == 1  # hop 2 never runs
+    assert any("stopped before hop 2" in n for n in r.notes)
+
+
+def test_traverse_path_inverse_marker_restricts_direction(movie_kb: KnowledgeBase):
+    # '^' walks only (?, p, entity): from an actor it finds the movies...
+    r = movie_kb.traverse_path("ns:Keanu_Reeves", ["^ns:starred_actors"])
+    assert r.terminals == ["ns:Speed", "ns:The_Matrix"]
+    # ...but from a movie (which is never an object of starred_actors) nothing,
+    # while the both-directions default does find the actor.
+    r = movie_kb.traverse_path("ns:The_Matrix", ["^ns:starred_actors"])
+    assert r.terminals == []
+    r = movie_kb.traverse_path("ns:The_Matrix", ["ns:starred_actors"])
+    assert r.terminals == ["ns:Keanu_Reeves"]
+
+
+def test_traverse_path_fanout_caps(kb: KnowledgeBase):
+    from nsai.kb import MAX_PATH_EDGES_PER_HOP, MAX_PATH_TERMINALS
+
+    n = MAX_PATH_EDGES_PER_HOP + 50  # 250: past both the edge and terminal caps
+    kb.add_triples([("ns:hub", "ns:p", f"ns:t{i:03d}") for i in range(n)])
+    r = kb.traverse_path("ns:hub", ["ns:p"])
+    assert len(r.terminals) == MAX_PATH_TERMINALS
+    assert r.terminals_truncated
+    assert any("truncated to 100 of 250" in n_ for n_ in r.notes)
+    # Edge evidence is capped separately; the frontier itself stays complete.
+    assert len(r.hops[0].edges) == MAX_PATH_EDGES_PER_HOP
+    assert r.hops[0].edges_truncated
+    assert r.hops[0].frontier_size == n
+    # Caller-supplied cap.
+    r = kb.traverse_path("ns:hub", ["ns:p"], max_terminals=5)
+    assert len(r.terminals) == 5 and r.terminals_truncated
+
+
+def test_traverse_path_validation(movie_kb: KnowledgeBase):
+    with pytest.raises(ValueError, match="at least one"):
+        movie_kb.traverse_path("ns:The_Matrix", [])
+    with pytest.raises(ValueError, match="exceeds the limit"):
+        movie_kb.traverse_path("ns:The_Matrix", ["ns:p"] * 6)
+    # Unknown start entity: traversal still returns, with an explicit note.
+    r = movie_kb.traverse_path("ns:Nobody", ["ns:starred_actors"])
+    assert r.terminals == []
+    assert any("does not occur in the KB" in n for n in r.notes)

@@ -313,6 +313,20 @@ def test_c2f_forces_delegation_prompt_and_subagents(tmp_path: Path):
     assert options.agents and "Task" in options.allowed_tools
 
 
+def test_qa_prompt_kb_path_hint_only_for_tool_conditions():
+    # prompt_rev 6 (S2): the kb_path traversal hint goes to the symbolic-tool
+    # conditions only; the baselines must not be told about a tool they lack.
+    task = {"id": "qa-0", "question": "who?", "start": "ns:a",
+            "answer": "ns:d", "hops": 2}
+    for cond in ("C1", "C2", "C2f"):
+        assert "kb_path" in render_prompt(task, "qa", cond, None), cond
+    for cond in ("B0", "B2"):
+        assert "kb_path" not in render_prompt(task, "qa", cond, None), cond
+    ttl = "@prefix ns: <http://nsai.local/ns#> ."
+    assert "kb_path" not in render_prompt(task, "qa", "B1", ttl)
+    assert "kb_path" not in render_prompt(task, "qa", "B1p", ttl)
+
+
 def test_b2_agentic_grep_condition(tmp_path: Path):
     task = {"id": "qa-0", "question": "who?", "start": "ns:a",
             "answer": "ns:d", "hops": 2}

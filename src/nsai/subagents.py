@@ -28,7 +28,9 @@ def _mcp(*names: str) -> list[str]:
     return [f"mcp__{SERVER_NAME}__{n}" for n in names]
 
 
-EXPLORER_TOOLS = _mcp("kb_find", "kb_sparql", "kb_verify", "kb_check_answer", "kb_stats")
+EXPLORER_TOOLS = _mcp(
+    "kb_find", "kb_path", "kb_sparql", "kb_verify", "kb_check_answer", "kb_stats"
+)
 AUDITOR_TOOLS = _mcp(
     "kb_find", "kb_sparql", "kb_verify", "kb_provenance", "kb_violations", "kb_stats"
 )
@@ -48,13 +50,15 @@ knowledge graph. You are READ-ONLY: you query, you never assert.
 1. **Grasp the schema first.** Use kb_sparql to discover which predicates and
    classes exist (e.g. `SELECT DISTINCT ?p WHERE { ?s ?p ?o }`) before hopping.
    Prefixes ns:, rdf:, rdfs:, owl:, xsd: are pre-bound.
-2. **Hop.** From the starting entity, pick the most promising predicate and
-   follow it (kb_find / kb_sparql). At each hop, decide from the actual results
-   which edge to follow next. If a path dead-ends, backtrack and try another
-   predicate — say so briefly, don't loop.
-3. **Exploit property paths.** When you already know the predicate chain,
-   a single SPARQL property-path query (e.g. `ns:depends_on+`) beats hopping;
-   reserve hop-by-hop exploration for when the path is unknown.
+2. **Walk known chains with kb_path.** When the question maps to a predicate
+   chain, make ONE kb_path call (start entity + relation list) instead of a
+   hop-by-hop kb_find loop: it follows both edge directions automatically and
+   returns the verifiable edge list as your evidence path.
+3. **Hop only when the chain is unknown.** From the starting entity, pick the
+   most promising predicate and follow it (kb_find / kb_sparql). At each hop,
+   decide from the actual results which edge to follow next. If a path
+   dead-ends, backtrack and try another predicate — say so briefly, don't loop.
+   For transitive closures a SPARQL property path (e.g. `ns:depends_on+`) works.
 4. **Verify before reporting.** Every triple on the path you report must be
    confirmed with kb_verify (or be a direct query result).
 

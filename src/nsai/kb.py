@@ -149,6 +149,41 @@ class CheckAnswerResult:
     checks: list[CheckOutcome]
 
 
+#: kb_path caps: hub hops (e.g. inverse has_genre — thousands of movies) must
+#: return a bounded, deterministic payload instead of flooding the context.
+#: Truncation is applied to the OUTPUT only; the traversal itself is complete.
+MAX_PATH_HOPS = 5
+MAX_PATH_TERMINALS = 100
+MAX_PATH_EDGES_PER_HOP = 200
+
+
+@dataclass
+class PathEdge:
+    """One traversed edge — a real KB triple plus the direction it was walked."""
+
+    subject: str
+    predicate: str
+    object: str
+    direction: str  # "forward" (subject -> object) | "inverse" (object -> subject)
+
+
+@dataclass
+class PathHop:
+    relation: str  # as supplied by the caller, including any '^' marker
+    edges: list[PathEdge]  # actual triples traversed (capped at MAX_PATH_EDGES_PER_HOP)
+    edges_truncated: bool
+    frontier_size: int  # distinct entities reached after this hop (never capped)
+
+
+@dataclass
+class PathResult:
+    terminals: list[str]
+    terminals_truncated: bool
+    excluded: list[str]  # entities removed from the terminals by exclude_start
+    hops: list[PathHop]
+    notes: list[str]
+
+
 class KnowledgeBase:
     """RDF graph with Turtle-file persistence and OWL-RL closure."""
 
@@ -588,6 +623,158 @@ class KnowledgeBase:
         rank = {"reject": 2, "warn": 1}
         worst = max(rank.get(c.status, 0) for c in checks)
         return CheckAnswerResult({2: "reject", 1: "warn", 0: "pass"}[worst], checks)
+
+    def traverse_path(
+        self,
+        start: str,
+        relations: list[str],
+        *,
+        exclude_start: bool = True,
+        max_terminals: int = MAX_PATH_TERMINALS,
+        max_hops: int = MAX_PATH_HOPS,
+    ) -> PathResult:
+        """Walk a predicate chain from `start` deterministically (§S2 kb_path).
+
+        Each hop follows its predicate in BOTH directions: MetaQA-style KBs
+        store each fact once (movie -> attribute) while questions traverse
+        either way ("movies starring X" is the inverse of starred_actors),
+        and per-hop direction judgment is exactly where agents misstep (~93%
+        of 3-hop failures answer a misread start attribute). A relation
+        prefixed with '^' restricts that hop to the inverse direction, an
+        escape hatch for when bidirectional fan-out is too large. Note this
+        deviates from SPARQL property-path semantics, where a bare predicate
+        is forward-only.
+
+        Returns the terminal entity set plus, per hop, the actual edges
+        traversed — each a verifiable KB triple labeled forward/inverse.
+        With exclude_start (default), the start entity is removed from the
+        TERMINAL set only (the answer convention for MetaQA-style questions:
+        "other movies starring X's actors" never includes X itself) and
+        reported in `excluded`; intermediate hops may still pass through the
+        start, so e.g. the start's own director stays reachable at 3 hops.
+        Truncation caps apply to the returned payload only — the traversal
+        itself always runs to completion (under the deadline guard).
+        """
+        if not relations:
+            raise ValueError("relations must contain at least one predicate")
+        if len(relations) > max_hops:
+            raise ValueError(
+                f"chain of {len(relations)} hops exceeds the limit of {max_hops}; "
+                "split the question into shorter chains"
+            )
+        start_term = parse_term(start)
+        notes: list[str] = []
+        hops: list[PathHop] = []
+        if (start_term, None, None) not in self.graph and (
+            None,
+            None,
+            start_term,
+        ) not in self.graph:
+            notes.append(
+                f"start entity {format_term(start_term)} does not occur in the KB — "
+                "check its spelling and casing (kb_check_answer suggests case variants)."
+            )
+        frontier: set[Node] = {start_term}
+        with _deadline(
+            SPARQL_TIMEOUT_S,
+            "kb_path traversal exceeded {}s — the chain fans out too widely on "
+            "this KB. Restrict hop directions with '^', or split the chain and "
+            "narrow intermediate frontiers with kb_find.",
+        ):
+            for idx, spec in enumerate(relations, start=1):
+                text = spec.strip()
+                inverse_only = text.startswith("^")
+                pred = parse_term(text[1:] if inverse_only else text)
+                if (None, pred, None) not in self.graph:
+                    notes.append(
+                        f"hop {idx}: predicate {format_term(pred)} has no triples in "
+                        "the KB — check the predicate name (kb_sparql SELECT DISTINCT "
+                        "?p lists the valid ones)."
+                    )
+                edges: list[PathEdge] = []
+                edges_truncated = False
+                next_frontier: set[Node] = set()
+                # Sorted iteration end to end: truncation must be reproducible,
+                # never an artifact of set/store ordering (cf. B1p neighborhood).
+                for entity in sorted(frontier, key=str):
+                    if isinstance(entity, Literal):
+                        continue  # literals terminate a path; they cannot be expanded
+                    steps: list[tuple[Node, Node, str, Node]] = []
+                    if not inverse_only:
+                        steps += [
+                            (entity, o, "forward", o) for o in self.graph.objects(entity, pred)
+                        ]
+                    steps += [
+                        (s, entity, "inverse", s) for s in self.graph.subjects(pred, entity)
+                    ]
+                    for s_node, o_node, direction, nxt in sorted(
+                        steps, key=lambda t: (str(t[0]), str(t[1]))
+                    ):
+                        next_frontier.add(nxt)
+                        if len(edges) < MAX_PATH_EDGES_PER_HOP:
+                            edges.append(
+                                PathEdge(
+                                    format_term(s_node),
+                                    format_term(pred),
+                                    format_term(o_node),
+                                    direction,
+                                )
+                            )
+                        else:
+                            edges_truncated = True
+                hops.append(
+                    PathHop(
+                        relation=spec,
+                        edges=edges,
+                        edges_truncated=edges_truncated,
+                        frontier_size=len(next_frontier),
+                    )
+                )
+                if edges_truncated:
+                    notes.append(
+                        f"hop {idx}: edge evidence truncated at "
+                        f"{MAX_PATH_EDGES_PER_HOP} edges (the frontier itself is "
+                        "complete; kb_verify specific edges if needed)."
+                    )
+                frontier = next_frontier
+                if not frontier:
+                    if idx < len(relations):
+                        notes.append(
+                            f"hop {idx}: no matching edges — traversal stopped "
+                            f"before hop {idx + 1}; the chain yields no terminals."
+                        )
+                    else:
+                        notes.append(
+                            f"hop {idx}: no matching edges — the chain yields no terminals."
+                        )
+                    break
+
+        excluded: list[str] = []
+        if exclude_start and start_term in frontier:
+            frontier = frontier - {start_term}
+            excluded.append(format_term(start_term))
+            notes.append(
+                f"excluded the start entity {format_term(start_term)} from the "
+                "terminals (exclude_start=True): a multi-hop answer set never "
+                "contains the question's own entity. Pass exclude_start=false "
+                "only if the question genuinely allows it."
+            )
+        terminals = sorted(format_term(t) for t in frontier)
+        terminals_truncated = len(terminals) > max_terminals
+        if terminals_truncated:
+            notes.append(
+                f"terminal set truncated to {max_terminals} of {len(terminals)} "
+                "entities — the chain is under-constrained for this question; "
+                "consider a more specific chain or '^' direction restrictions."
+            )
+            terminals = terminals[:max_terminals]
+        return PathResult(
+            terminals=terminals,
+            terminals_truncated=terminals_truncated,
+            excluded=excluded,
+            hops=hops,
+            notes=notes,
+        )
 
     # -- export / import -------------------------------------------------------
 
