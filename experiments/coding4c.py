@@ -8,9 +8,10 @@ Conditions (docs/experiment-plan.md §実験4c):
          report its DONE/CONTINUE/STALLED verdict before it may declare
 
 Tasks come from a bugsuite-format directory (buggy.py + hidden cases.json +
-meta.json with entry_point/feasible, optional spec.md). Five tasks are
-deliberately infeasible (contradictory spec): the correct behaviour there is
-to declare STALLED rather than loop forever or claim success.
+meta.json with entry_point/feasible, optional spec.md). Twenty tasks (5
+original + 15 tiered extensions, see bugsuite/README.md) are deliberately
+infeasible (contradictory spec): the correct behaviour there is to declare
+STALLED rather than loop forever or claim success.
 
 Protocol: one SDK session per task. Each query/response exchange is one
 iteration. A response ending with `FINAL: DONE` or `FINAL: STALLED` ends the

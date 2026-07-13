@@ -1,8 +1,9 @@
 # bugsuite — hand-crafted boundary-bug suite (実験4a 自作分 / 実験4c 素材)
 
-30 feasible single-defect bug-fixing tasks (6 per category) plus 5
+30 feasible single-defect bug-fixing tasks (6 per category) plus 20
 deliberately INFEASIBLE variants with self-contradictory specs for the
-loop-judge experiment (実験4c).
+loop-judge experiment (実験4c): 5 original tasks and 15 tiered extensions
+(source `handwritten-ext-2026-07-13`, 5 per difficulty tier).
 
 ## Layout
 
@@ -20,7 +21,8 @@ Each task lives in `bugsuite/<name>/`:
   used only for mechanical validation (`tests/test_bugsuite.py`) and as 実験4c
   material. Identical to `buggy.py` except for the single planted defect.
 - `meta.json` — `{"name", "category", "bug_type", "source", "lcb_problem_id"
-  (livecodebench tasks only), "feasible", "entry_point"}`.
+  (livecodebench tasks only), "feasible", "entry_point", "tier" (infeasible
+  extension tasks only)}`.
 - `spec.md` — infeasible variants only: the full (self-contradictory)
   requirements document.
 
@@ -28,6 +30,25 @@ Infeasible variants live in `bugsuite/infeasible-<name>/` with
 `"feasible": false`, no `correct.py` (none can exist), and a `cases.json`
 that is itself unsatisfiable: it contains the same input twice with two
 different expected outputs, mirroring the contradiction in `spec.md`.
+`buggy.py` is a plausible implementation of ONE reading of the spec (it
+passes some cases, never all, and never crashes).
+
+The 15 extension tasks additionally carry a `"tier"` field grading how
+hidden the contradiction is:
+
+- `direct-example` — two requirements give the SAME concrete input two
+  different outputs, right in the requirement text.
+- `rule-vs-example` — the rules look consistent; a worked example elsewhere
+  in the spec contradicts one of them.
+- `implied` — each rule is individually satisfiable; only their composition
+  is unsatisfiable, on a whole input class no example spells out.
+
+Mechanical validation of all infeasible variants (import, case parsing,
+unsatisfiability, one-sided `buggy.py`):
+
+```sh
+uv run python scripts/validate_infeasible.py
+```
 
 ## Categories (6 feasible tasks each)
 

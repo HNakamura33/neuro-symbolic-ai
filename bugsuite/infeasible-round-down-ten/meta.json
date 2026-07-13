@@ -1,0 +1,9 @@
+{
+  "name": "infeasible-round-down-ten",
+  "category": "rounding",
+  "bug_type": "spec-contradiction",
+  "source": "handwritten-ext-2026-07-13",
+  "feasible": false,
+  "entry_point": "round_down_to_ten",
+  "tier": "rule-vs-example"
+}

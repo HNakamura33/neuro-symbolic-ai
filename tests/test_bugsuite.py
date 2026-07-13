@@ -28,7 +28,12 @@ BUG_TYPES = {
     "inclusive-exclusive-end", "leap-year-edge", "plus-minus-one",
     "spec-contradiction",
 }
-SOURCES = {"handwritten", "livecodebench"}
+SOURCES = {"handwritten", "livecodebench", "handwritten-ext-2026-07-13"}
+# Difficulty tiers of the 2026-07-13 infeasible extension (実験4c 拡張):
+# direct-example   two requirements give the same concrete input different outputs
+# rule-vs-example  a worked example elsewhere in the spec contradicts a rule
+# implied          individually-sound rules that conflict on a whole input class
+TIERS = {"direct-example", "rule-vs-example", "implied"}
 
 
 def _tasks() -> list[Path]:
@@ -65,11 +70,17 @@ _ids = lambda dirs: [d.name for d in dirs]  # noqa: E731
 
 def test_suite_composition():
     assert len(FEASIBLE) == 30
-    assert len(INFEASIBLE) == 5
+    assert len(INFEASIBLE) == 20  # 5 original + 15 tiered (2026-07-13 ext)
     per_cat: dict[str, int] = {}
     for d in FEASIBLE:
         per_cat[_meta(d)["category"]] = per_cat.get(_meta(d)["category"], 0) + 1
     assert per_cat == {cat: 6 for cat in CATEGORIES}
+    per_tier: dict[str, int] = {}
+    for d in INFEASIBLE:
+        tier = _meta(d).get("tier")
+        if tier is not None:
+            per_tier[tier] = per_tier.get(tier, 0) + 1
+    assert per_tier == {tier: 5 for tier in TIERS}
     entries = [_meta(d)["entry_point"] for d in ALL]
     assert len(set(entries)) == len(entries), "entry_point collision"
 
@@ -102,6 +113,8 @@ def test_meta_well_formed(task_dir: Path):
     assert isinstance(meta["entry_point"], str) and meta["entry_point"]
     if meta["source"] == "livecodebench":
         assert meta["lcb_problem_id"]
+    if "tier" in meta:
+        assert not meta["feasible"] and meta["tier"] in TIERS
     assert (task_dir / "buggy.py").exists()
     text = (task_dir / "buggy.py").read_text(encoding="utf-8")
     assert text.startswith('"""'), "buggy.py must open with the spec docstring"
