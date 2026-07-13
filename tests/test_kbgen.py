@@ -30,6 +30,32 @@ def test_label_balance_and_kinds(ds: Dataset):
     assert any(c.kind.startswith("inferred") for c in labels["entailed"])
 
 
+def test_meta_counts_reflect_generated_claims(ds: Dataset):
+    """meta must report ACTUAL per-label/per-kind counts, not the intended mix."""
+    expected_labels: dict[str, int] = {}
+    expected_kinds: dict[str, int] = {}
+    for c in ds.claims:
+        expected_labels[c.label] = expected_labels.get(c.label, 0) + 1
+        expected_kinds[c.kind] = expected_kinds.get(c.kind, 0) + 1
+    assert ds.meta["claim_labels"] == expected_labels
+    assert ds.meta["claim_kinds"] == expected_kinds
+    assert sum(ds.meta["claim_kinds"].values()) == ds.meta["claims"]
+
+
+def test_meta_omits_kinds_crowded_out_at_scale():
+    """At scale, diff_pairs can exhaust the contradicted budget so no
+    functional_conflict claims are generated — meta must show that, not
+    pretend every kind exists."""
+    big = generate(size=500, seed=3, claims_per_label=8, qa_per_hop=2, hops=(2,))
+    kinds = big.meta["claim_kinds"]
+    assert kinds == {
+        k: sum(1 for c in big.claims if c.kind == k) for k in {c.kind for c in big.claims}
+    }
+    # n_people=100 → 10 diff_pairs > per_label=8: functional_conflict is crowded out.
+    assert "functional_conflict" not in kinds
+    assert kinds["different_from"] == 8
+
+
 def test_gold_labels_agree_with_kb_verify(ds: Dataset, tmp_path: Path):
     """End-to-end: the saved KB's own verify_triple must reproduce every gold
     label (sampled per label to keep closure computations bounded)."""

@@ -225,10 +225,13 @@ def kb_check(
 
 @kb_app.command("infer")
 def kb_infer_cmd(kb: Optional[Path] = KBPathOption):
-    """Materialize RDFS/OWL-RL inferred triples into the KB."""
+    """Count RDFS/OWL-RL inferred triples (in-memory only; kb.ttl is not modified)."""
     store = KnowledgeBase(_kb_path(kb))
     added = store.infer()
-    console.print(f"inferred {added} new triples ({store.stats()['triples']} total).")
+    console.print(
+        f"inferred {added} new triples ({store.stats()['triples']} total, in-memory; "
+        "kb.ttl unchanged — use 'kb export' to serialize the closure)."
+    )
 
 
 @kb_app.command("export")

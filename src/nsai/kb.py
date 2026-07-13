@@ -363,17 +363,23 @@ class KnowledgeBase:
         return expanded
 
     def infer(self) -> int:
-        """Materialize inferred triples into the KB. Returns number of new triples."""
+        """Materialize inferred triples into the in-memory graph only.
+
+        Deliberately never save()s: persisting closure triples to kb.ttl
+        would bake provenance-less inferred facts into the on-disk KB, and
+        an unsound closure (contradiction-bearing KB) would be permanent.
+        The materialization lives for this KnowledgeBase instance; use
+        export() if a serialized closure is explicitly wanted.
+
+        Returns the number of new triples.
+        """
         before = len(self.graph)
         expanded = self.closure()
         for triple in expanded:
             if triple not in self.graph:
                 self.graph.add(triple)
                 self._inferred_triples.add(triple)
-        added = len(self.graph) - before
-        if added:
-            self.save()
-        return added
+        return len(self.graph) - before
 
     @property
     def inferred_triple_count(self) -> int:
