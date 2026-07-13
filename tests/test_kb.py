@@ -194,6 +194,28 @@ def test_find_tags_origin_after_infer(kb: KnowledgeBase):
     assert origins["ns:Mortal"] == "inferred"
 
 
+def test_infer_does_not_persist_to_disk(kb: KnowledgeBase):
+    """infer() is in-memory only: closure triples have no provenance and must
+    never be written into kb.ttl."""
+    kb.add_triples(
+        [
+            ("ns:socrates", "rdf:type", "ns:Human"),
+            ("ns:Human", "rdfs:subClassOf", "ns:Mortal"),
+        ]
+    )
+    on_disk_before = kb.path.read_bytes()
+    added = kb.infer()
+    assert added > 0
+    assert kb.path.read_bytes() == on_disk_before
+    # A fresh load sees only the asserted triples, not the materialization.
+    reloaded = KnowledgeBase(kb.path)
+    assert (
+        parse_term("ns:socrates"),
+        parse_term("rdf:type"),
+        parse_term("ns:Mortal"),
+    ) not in reloaded.graph
+
+
 # -- check_answer (S1 FINAL-gate) --------------------------------------------
 
 

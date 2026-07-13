@@ -25,6 +25,7 @@ import argparse
 import json
 import random
 import shutil
+from collections import Counter
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
@@ -196,12 +197,20 @@ def generate(
     claims = _make_claims(rng, closure, triples, people, cities, countries, aliased, diff_pairs, born, claims_per_label)
     qa = _make_qa(rng, maps, people, hops, qa_per_hop)
 
+    # Count what was ACTUALLY generated, not what the generator aims for:
+    # e.g. at large sizes diff_pairs can hit the per-label budget and
+    # functional_conflict claims drop to zero — meta must reflect that.
+    claim_labels = Counter(c.label for c in claims)
+    claim_kinds = Counter(c.kind for c in claims)
+
     meta = {
         "seed": seed,
         "size_requested": size,
         "triples": len(triples),
         "people": n_people,
         "claims": len(claims),
+        "claim_labels": dict(sorted(claim_labels.items())),
+        "claim_kinds": dict(sorted(claim_kinds.items())),
         "qa": len(qa),
         "hops": list(hops),
     }
