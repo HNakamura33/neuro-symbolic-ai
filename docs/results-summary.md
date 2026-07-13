@@ -147,11 +147,33 @@ Max サブスクリプション OAuth 経由の推定値。
 
 - sonnet は self/judge 完全一致(天井)。**haiku で初の分離**: self は
   実行不能仕様 5 課題すべてでテスト不合格のまま完了宣言、judge は誤宣言を
-  3/5 に抑え 2/5 を STALLED と検出。外部判定者は宣言の過信を部分的に抑制
-  する — 天井を降ろすと judge の価値が現れる(コスト 2.5 倍)。
-- **注意: 実行不能課題は n=5 で統計的主張は不能**。RQ4 で唯一の有意化
-  可能ポイントとして、実行不能課題を 15〜20 問に拡張した haiku 追試
-  (~$10)を推奨(未実施)。
+  3/5 に抑え 2/5 を STALLED と検出(コスト 2.5 倍)。ただし n=5。
+
+#### 4c 拡張(2026-07-13): 実行不能課題を 20 問に拡張 — judge 仮説は不支持
+
+実行不能課題を 3 難度層(direct-example / rule-vs-example / implied、
+各 5 問)× 5 問追加し、既存 5 問(original)とプールして n=20 で再検定
+(`results/coding4c-*-inf15.jsonl`、検証: scripts/validate_infeasible.py 20/20)。
+
+| セル | 誤宣言(プール n=20) | tier 別誤宣言 (orig/direct/rule/implied) | コスト |
+|---|---|---|---|
+| self haiku | **19/20** | 5/5・4/5・5/5・5/5 | $2.07 |
+| judge haiku | 15/20 | 3/5・5/5・2/5・5/5 | $4.07 |
+| self sonnet | **2/20** | 0/5・0/5・0/5・**2/5** | $3.64 |
+| judge sonnet | 3/20 | 0/5・0/5・1/5・**2/5** | $6.49 |
+
+- **RQ4-3「loop-judge は早期完了を減らす」は n=20 で不支持**: haiku
+  self 19/20 vs judge 15/20、Fisher 片側 p=0.091。旧 n=5 の分離(5/5 vs
+  3/5)は拡張で縮み、有意水準に届かない。judge の勝ちは original と
+  rule-vs-example に散発し、direct-example では self より悪い(5/5)—
+  LLM 判定者は同じ失敗モードを継承する。
+- **支配効果はモデル能力**: self haiku 19/20 vs self sonnet 2/20、
+  p=2.9e-08。宣言の信頼性を決めるのはプロトコルでなくモデル。
+- **新知見: implied 層(2 規則の合成矛盾)は sonnet も破る** — self/judge
+  とも 2/5 誤宣言で、judge は救えない。仕様矛盾の検出は LLM 検証
+  (loop-judge)では閉じず、決定論的検査が要る — 本論文のゲートテーゼの
+  コーディング領域における対偶。仕様制約を smt_verify に落として UNSAT を
+  検出する記号ゲート(未実装)が構成的な後続実験。
 
 ## RQ5 — haiku 委譲のコスト効率
 
