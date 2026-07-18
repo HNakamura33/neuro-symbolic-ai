@@ -105,6 +105,27 @@ def test_metaqa_kb_and_qa_conversion(metaqa_src: Path, tmp_path: Path):
     assert all(q["answer"] in entities["entities"] for q in qa)
 
 
+def test_metaqa_exclude_builds_disjoint_heldout_sample(metaqa_src: Path, tmp_path: Path):
+    dev_out = tmp_path / "dev"
+    convert_metaqa(metaqa_src, dev_out)
+    held_out = tmp_path / "heldout"
+    meta = convert_metaqa(metaqa_src, held_out, exclude=dev_out / "qa.jsonl")
+    # every single-answer question is in dev, so the held-out sample is empty
+    assert read_jsonl(held_out / "qa.jsonl") == []
+    assert meta["excluded_from"] == str(dev_out / "qa.jsonl")
+    assert meta["per_hop"]["1"]["excluded"] == 2
+    assert meta["per_hop"]["1"]["written"] == 0
+    # partial exclusion: drop one dev question, only it survives into held-out
+    dev_qa = read_jsonl(dev_out / "qa.jsonl")
+    kept_back = dev_qa[0]
+    (dev_out / "qa.jsonl").write_text(
+        "\n".join(json.dumps(r) for r in dev_qa[1:]) + "\n", encoding="utf-8"
+    )
+    meta = convert_metaqa(metaqa_src, tmp_path / "heldout2", exclude=dev_out / "qa.jsonl")
+    qa = read_jsonl(tmp_path / "heldout2" / "qa.jsonl")
+    assert [q["question"] for q in qa] == [kept_back["question"]]
+
+
 def test_metaqa_meta_records_exclusions_and_missing_hops(metaqa_src: Path, tmp_path: Path):
     meta = convert_metaqa(metaqa_src, tmp_path / "out")
     assert meta["per_hop"]["1"] == {

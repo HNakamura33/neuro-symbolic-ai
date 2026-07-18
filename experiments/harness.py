@@ -22,6 +22,13 @@ Conditions (docs/experiment-plan.md):
        measured C2 delegation was 0/600 on MetaQA, so the C2−C1 gap says
        nothing about delegation; C2f separates the delegation ceiling from
        the main agent's willingness to delegate. qa task type only.
+- B2g  B2 with a FORCED grep-based verify-before-FINAL contract (referee M3):
+       the neural-gate ablation. Mirrors the rev5 symbolic gate (S1
+       existence/start-exclusion + S4 final-hop verification) but every check
+       runs as Grep over the raw Turtle instead of kb_* tools. Separates
+       "forced output-path checking as a protocol" from "deterministic
+       symbolic checking": B2→B2g isolates the protocol, B2g→C1-rev5
+       isolates determinism. qa task type only.
 
 Each task runs in a fresh session against a scratch copy of the dataset KB
 (agents may assert triples; the pristine KB must survive across tasks).
@@ -55,7 +62,7 @@ from claude_agent_sdk import (
 from nsai.agent import build_options
 from nsai.kb import KnowledgeBase
 
-CONDITIONS = ("B0", "B1", "B1p", "B2", "C1", "C2", "C2f")
+CONDITIONS = ("B0", "B1", "B1p", "B2", "B2g", "C1", "C2", "C2f")
 
 BASELINE_SYSTEM = (
     "You are a careful reasoner. Follow the task instructions exactly. "
@@ -142,6 +149,31 @@ subagent with the failure reason instead of exploring yourself. Only a \
 candidate that passes both steps may appear on the FINAL line.
 """
 
+# B2g (referee M3): the neural-gate contract appended to QA_TASK for B2g
+# only. Structurally mirrors QA_VERIFY step by step — same checks, same
+# mandatory-protocol framing, same "resume exploring on failure" rule — with
+# every deterministic kb_* call replaced by Grep over the raw Turtle. Any
+# EM gap between B2g and C1-rev5 therefore isolates the checker's
+# determinism, not the presence of a forced protocol.
+QA_GREP_VERIFY = """\
+
+Before emitting the FINAL line you MUST run this verification protocol, \
+using Grep over kb.ttl (no other evidence counts):
+(a) Verify the final-hop triple your answer rests on: grep for the line \
+linking your last intermediate entity to the candidate answer, checking \
+both edge directions (the entity may be subject or object). If no such \
+line exists in kb.ttl, the chain is broken — resume exploring instead of \
+answering.
+(b) Existence and start-exclusion checks: grep that the candidate entity \
+itself appears in kb.ttl (if it never appears, discard it and resume \
+exploring). Then grep whether the candidate is DIRECTLY linked to the \
+question's start entity by any single edge. If it is, and the question is \
+multi-hop, re-derive the full hop chain hop by hop and keep the candidate \
+only if every hop has a matching line in kb.ttl — in a multi-hop question, \
+an entity one hop from the start is almost always the wrong answer.
+Only a candidate that passes both steps may appear on the FINAL line.
+"""
+
 # C2f: the delegation mandate appended to QA_TASK. Mirrors the audit
 # prompt's synchronous-delegation contract (prompt_rev 2). prompt_rev 3
 # adds the structured-handoff copy rule: the subagent's FINAL line is
@@ -186,7 +218,8 @@ asserted (pre-inference) triples in one call.
 
 # Bump when any task prompt changes; recorded per record for reproducibility.
 # 4 = S3 kb_violations (Lane E); 5 = S1 kb_check_answer + S4 verify-before-FINAL (Lane F);
-# 6 = S2 kb_path symbolic traversal (Lane S2).
+# 6 = S2 kb_path symbolic traversal (Lane S2). The B2g condition (QA_GREP_VERIFY)
+# was introduced during the rev-6 era without touching any existing prompt.
 PROMPT_REV = 6
 
 
@@ -200,7 +233,7 @@ def render_prompt(task: dict, task_type: str, condition: str, facts_ttl: str | N
             " provided below (facts retrieved around the question entity; "
             "answer only from these facts)"
         )
-    elif condition == "B2":
+    elif condition in ("B2", "B2g"):
         source_hint = (
             " stored as Turtle in kb.ttl in your working directory — search "
             "it with Grep and Read (entities look like ns:Some_Name)"
@@ -217,6 +250,8 @@ def render_prompt(task: dict, task_type: str, condition: str, facts_ttl: str | N
             # Symbolic-tool conditions only: B0/B1/B1p/B2 have no kb_* tools,
             # so the contract would be unsatisfiable noise there.
             body += QA_PATH + QA_VERIFY
+        elif condition == "B2g":
+            body += QA_GREP_VERIFY
     else:
         body = AUDIT_TASK.format(source_hint=source_hint)
         if condition in ("C1", "C2"):  # tool conditions only; B1/B2 have no kb_* tools
@@ -273,7 +308,7 @@ def _condition_options(
             permission_mode="dontAsk",
             setting_sources=[],
         )
-    if condition == "B2":
+    if condition in ("B2", "B2g"):
         return ClaudeAgentOptions(
             system_prompt=AGENTIC_GREP_SYSTEM,
             model=model,
@@ -549,6 +584,8 @@ def main() -> None:
         ap.error("B1p requires --task-type qa (needs a start entity)")
     if args.condition == "C2f" and args.task_type != "qa":
         ap.error("C2f (forced delegation) is defined for --task-type qa only")
+    if args.condition == "B2g" and args.task_type != "qa":
+        ap.error("B2g (grep-gate) is defined for --task-type qa only")
     asyncio.run(
         run_dataset(args.dataset, args.task_type, args.condition, args.model,
                     args.runs, args.limit, args.out,

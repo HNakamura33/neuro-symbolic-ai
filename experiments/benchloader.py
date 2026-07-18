@@ -162,13 +162,24 @@ def _metaqa_qa_file(src: Path, hop: int, split: str) -> Path | None:
 
 
 def convert_metaqa(
-    src: Path, out: Path, split: str = "test", sample: int | None = None, seed: int = 0
+    src: Path, out: Path, split: str = "test", sample: int | None = None, seed: int = 0,
+    exclude: Path | None = None,
 ) -> dict:
     """MetaQA distribution dir -> dataset dir (kb.ttl + qa.jsonl).
 
     Only single-answer questions are kept (exact-match grading); the number of
     multi-answer questions dropped per hop is recorded in meta.json.
+
+    ``exclude`` names an existing dataset's qa.jsonl whose questions must not
+    appear in the new sample — the held-out guarantee: a sample drawn with a
+    fresh seed would otherwise overlap the development set by chance.
     """
+    excluded: set[tuple[int, str]] = set()
+    if exclude is not None:
+        for line in exclude.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                rec = json.loads(line)
+                excluded.add((rec["hops"], rec["question"]))
     used: set[str] = set()
     ents = CurieMapper(used)
     rels = CurieMapper(used)
@@ -218,6 +229,11 @@ def convert_metaqa(
                     "hops": hop,
                 }
             )
+        excluded_here = 0
+        if excluded:
+            before = len(kept)
+            kept = [r for r in kept if (r["hops"], r["question"]) not in excluded]
+            excluded_here = before - len(kept)
         sampled = len(kept)
         if sample is not None and len(kept) > sample:
             kept = rng.sample(kept, sample)
@@ -232,6 +248,8 @@ def convert_metaqa(
             "single_answer_kept": total - dropped_multi - dropped_malformed,
             "written": sampled,
         }
+        if exclude is not None:
+            per_hop[str(hop)]["excluded"] = excluded_here
     if not any(h.get("found") for h in per_hop.values()):
         raise FileNotFoundError(f"no qa_{split}.txt found under {src}/{{1,2,3}}-hop")
 
@@ -248,6 +266,7 @@ def convert_metaqa(
         "split": split,
         "seed": seed,
         "sample_per_hop": sample,
+        "excluded_from": str(exclude) if exclude else None,
         "kb_triples": kb_triples,
         "kb_lines_skipped": kb_lines_skipped,
         "entities": len(ents.by_name),
@@ -629,6 +648,9 @@ def main(argv: list[str] | None = None) -> None:
     m.add_argument("--split", default="test", choices=("train", "dev", "test"))
     m.add_argument("--sample", type=int, default=None, help="Sample N questions per hop")
     m.add_argument("--seed", type=int, default=0)
+    m.add_argument("--exclude", type=Path, default=None,
+                   help="qa.jsonl of an existing dataset; its questions are "
+                        "excluded before sampling (held-out set construction)")
 
     p = sub.add_parser("proofwriter", help="ProofWriter OWA meta jsonl -> kb.ttl + claims.jsonl")
     p.add_argument("--src", type=Path, required=True, help="ProofWriter meta-stage .jsonl file")
@@ -644,7 +666,8 @@ def main(argv: list[str] | None = None) -> None:
     args = ap.parse_args(argv)
     if args.cmd == "metaqa":
         meta = convert_metaqa(args.src, args.out, split=args.split,
-                              sample=args.sample, seed=args.seed)
+                              sample=args.sample, seed=args.seed,
+                              exclude=args.exclude)
     elif args.cmd == "proofwriter":
         meta = convert_proofwriter(args.src, args.out, validate=not args.no_validate)
     else:
