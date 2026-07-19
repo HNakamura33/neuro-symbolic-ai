@@ -33,7 +33,8 @@ wave1)
   ;;
 wave2)
   # M5: second runs of the two headline conditions; M1: perturbed held-out rev5
-  launch "$REPO" metaqa-C1-rev5-run1 \
+  # rev5 runs MUST launch from $REV5 (PROMPT_REV=5); main is at rev 6.
+  launch "$REV5" metaqa-C1-rev5-run1 \
     --dataset data/metaqa --task-type qa --condition C1 --model sonnet \
     --out "$REPO/results/metaqa-C1-rev5-run1.jsonl"
   launch "$REPO" metaqa-B2-run1 \
@@ -44,8 +45,8 @@ wave2)
     --out "$REPO/results/metaqa-heldout-pert-C1-rev5.jsonl"
   ;;
 wave3)
-  # M5: third runs
-  launch "$REPO" metaqa-C1-rev5-run2 \
+  # M5: third runs (rev5 from the pinned worktree, see wave2 note)
+  launch "$REV5" metaqa-C1-rev5-run2 \
     --dataset data/metaqa --task-type qa --condition C1 --model sonnet \
     --out "$REPO/results/metaqa-C1-rev5-run2.jsonl"
   launch "$REPO" metaqa-B2-run2 \
